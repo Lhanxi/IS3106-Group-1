@@ -3,7 +3,7 @@ IS3106 Group 1 Project
 
 ## Setup Instructions
 
-1. Create a `.env` file in the root directory of the project (outside of the `backend` folder) and input the following:
+1. Create a `.env` file in backend folder and input the following: 
     ```properties
     MONGO_URI=<your_mongo_uri>
     ```
