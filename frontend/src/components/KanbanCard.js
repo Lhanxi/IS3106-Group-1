@@ -1,13 +1,15 @@
 import React from 'react'
 
-const KanbanCard = () => {
-
+const KanbanCard = ({ task = {} }) => {  // Default to an empty object if task is undefined
     return (
-        //only displays the name of the task for now 
-    <div>
-        <p>Hello</p>
-    </div>
+        <div className="card border shadow-sm p-3 mb-2 bg-white" style={{ maxWidth: "300px" }}>
+            <div className="card-body">
+                <h5 className="card-title">{task.title || "Untitled Task"}</h5>  {/* Default Title */}
+                <p className="card-text">{task.description || "No description available."}</p>  {/* Default Description */}
+                <span className="badge bg-secondary">{task.status || "Unknown Status"}</span>  {/* Default Status */}
+            </div>
+        </div>
     );
 }
 
-export default KanbanCard
+export default KanbanCard;

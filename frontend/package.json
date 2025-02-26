@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
-    "@syncfusion/ej2-react-kanban": "^28.2.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",

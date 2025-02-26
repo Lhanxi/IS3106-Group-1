@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
+//import Kanban from "./pages/Kanban";
+import KanbanCard from "./components/KanbanCard";
 
 
 // test feature, can just delete 
@@ -16,6 +18,7 @@ function App() {
   return (
     <div>
       <h1>Users List</h1>
+      <KanbanCard />
       <ul>
         {users.map((user) => (
           <li key={user._id}>{user.name} - {user.email}</li>
