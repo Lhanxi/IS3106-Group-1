@@ -3,7 +3,10 @@ import axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Kanban from "./pages/Kanban";
 import KanbanCard from "./components/KanbanCard";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 
+const theme = createTheme();
 
 // test feature, can just delete 
 function App() {

@@ -35,6 +35,28 @@ router.get("/:projectId/tasks", async (req, res) => {
     }
 })
 
+router.get("/:projectId/cols", async (req, res) => {
+    try {
+        const projectId = req.params.projectId;
+        const tasks = await Task.find({ projectId: new mongoose.Types.ObjectId(projectId) });
+
+        if (tasks.length === 0) {
+            return res.json([]); 
+        }
+
+        const uniqueAttributes = new Set();
+        tasks.forEach(task => {
+            Object.keys(task.toObject()).forEach(key => uniqueAttributes.add(key));
+        });
+
+        res.json(Array.from(uniqueAttributes)); 
+    } catch (error) {
+        console.error("Error fetching distinct attributes:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
 router.put("/tasks/:id", async (req, res) => {
     const { id } = req.params;
     const { status } = req.body; // Extract the new status from the request
