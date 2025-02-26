@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
+
+const taskSchema = new mongoose.Schema({
   name: String,
-  dueDate: String, 
-  //will need to dynamically update the tasks as we add more columns
+  status: String,
+  description: String, 
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: "Project" }
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("Task", taskSchema);
