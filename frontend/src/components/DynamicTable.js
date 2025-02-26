@@ -13,22 +13,38 @@ const DynamicTable = ({projectId}) => {
   const [searchQuery, setSearchQuery] = useState(""); // Track search query
 
   useEffect(() => {
-    //gets the information for each task (i.e. the row) 
     axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
-      .then((response) => {setRows(response.data);})
+      .then((response) => {
+        const formattedRows = response.data.map(row => ({
+          ...row,
+          id: row._id //neceesary because of how MUI workds
+        }));
+        setRows(formattedRows);
+      })
       .catch((error) => {
-        console.error("Error fetching devices:", error);
+        console.error("Error fetching tasks:", error);
       });
   }, [projectId]);
+  
 
   useEffect(() => {
-    //gets the columns for each task 
     axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
-        .then((response) => {setCols(response.data);})
-        .catch((error) => {console.error("Error fetching devices:", error);
-        });
+      .then((response) => {
+        const columnNames = response.data;
+  
+        const formattedColumns = columnNames.map((col) => ({
+          field: col,
+          headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()), // Format headers
+          width: 150, // Adjust width as needed
+        }));
+  
+        setCols(formattedColumns);
+      })
+      .catch((error) => {
+        console.error("Error fetching columns:", error);
+      });
   }, [projectId]);
-
+  
 
   const filteredRows = rows.filter((row) => {
     const statusMatch = statusFilter === "" || row.status === statusFilter;

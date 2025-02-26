@@ -5,6 +5,7 @@ import Kanban from "./pages/Kanban";
 import KanbanCard from "./components/KanbanCard";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import DynamicTable from "./components/DynamicTable";
 
 const theme = createTheme();
 
@@ -20,15 +21,19 @@ function App() {
   }, []);
 
   return (
-    <div>
+    <ThemeProvider theme = {theme}>
+      <div>
       <h1>Users List</h1>
       <Kanban projectId={projectId} />
+      <DynamicTable projectId={projectId} />
       <ul>
         {users.map((user) => (
           <li key={user._id}>{user.name} - {user.email}</li>
         ))}
       </ul>
     </div>
+    </ThemeProvider>
+    
   );
 }
 
