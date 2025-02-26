@@ -35,4 +35,27 @@ router.get("/:projectId/tasks", async (req, res) => {
     }
 })
 
+router.put("/tasks/:id", async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body; // Extract the new status from the request
+
+    try {
+        // Find the task by ID and update its status
+        const updatedTask = await Task.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true } // Returns the updated task
+        );
+
+        if (!updatedTask) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        res.json(updatedTask); // Send back the updated task
+    } catch (error) {
+        console.error("Error updating task:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 module.exports = router;

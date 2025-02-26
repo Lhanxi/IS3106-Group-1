@@ -36,11 +36,47 @@ const Kanban = ({ projectId }) => {
         if (projectId) getTasks();
     }, [projectId]);
 
+    const updateTask = async (updatedTask) => {
+        setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+                task._id === updatedTask._id ? { ...task, status: updatedTask.status } : task
+            )
+        );
+    
+        try {
+            await axios.put(`http://localhost:5001/api/tasks/${updatedTask._id}`, updatedTask);
+        } catch (error) {
+            console.error("Error updating task:", error.response?.status, error.response?.data);
+            // Optional: Revert state update in case of an error
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task._id === updatedTask._id ? { ...task, status: task.status } : task
+                )
+            );
+        }
+    };
+    
+    const handleDrop = (e, status) => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData("id");
+        const task = tasks.find((task) => task._id === id);
+    
+        if (task && task.status !== status) {
+            updateTask({ ...task, status });
+        }
+    };
+    
+
     return (
         <div className="kanban-board">
             {statuses.length > 0 ? (
                 statuses.map((status) => (
-                    <div key={status} className="kanban-column">
+                    <div 
+                        key={status} 
+                        onDrop={(e) => handleDrop(e, status)}
+                        onDragOver={(e) => e.preventDefault()}
+                        className="kanban-column"
+                    >
                         <h3>{status}</h3>
                         <div className="kanban-tasks">
                             {tasks
