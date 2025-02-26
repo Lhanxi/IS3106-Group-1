@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react'; 
+import "../pages/Kanban.css";
 
 const KanbanCard = ({ task = {} }) => {  // Default to an empty object if task is undefined
     return (

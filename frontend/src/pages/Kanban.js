@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import KanbanCard from '../components/KanbanCard';
+import "./Kanban.css";
 
 const Kanban = ({ projectId }) => {
     // State for statuses and tasks
