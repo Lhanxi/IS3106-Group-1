@@ -145,59 +145,68 @@ const DynamicTable = ({ projectId }) => {
   // Apply search filter by name
   const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  return (
-    <Box sx={{ width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
-      {/* Project Name Header */}
-      {projectName && (
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
-          {projectName}
-        </Typography>
-      )}
-  
-      {/* Centered Content */}
-      <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
-        {/* Search Bar */}
-        <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
-          <TextField label="Search by Name" variant="outlined" fullWidth value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-        </Box>
-  
-        {/* Add Column Section */}
-        <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
-          <TextField label="New Column Name" variant="outlined" fullWidth value={newColumn} onChange={(e) => setNewColumn(e.target.value)} />
-          <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
-        </Box>
-  
-        {/* Dynamic Table */}
-        <DataGrid rows={filteredRows} columns={cols} autoHeight checkboxSelection disableColumnMenu />
-  
-        {/* Edit Task Modal */}
-        {selectedTask && (
-          <Dialog open={true} onClose={() => setSelectedTask(null)} fullWidth>
-            <DialogTitle>Edit Task</DialogTitle>
-            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, paddingTop: 2 }}>
-              {Object.keys(selectedTask).map((field) => 
-                field !== "id" && field !== "_id" && field !== "__v" && (
-                  field === "status" ? (
-                    <Select key={field} value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} fullWidth>
-                      <MenuItem value="To Do">To Do</MenuItem>
-                      <MenuItem value="In Progress">In Progress</MenuItem>
-                      <MenuItem value="Done">Done</MenuItem>
-                    </Select>
-                  ) : (
-                    <TextField key={field} label={field} variant="outlined" fullWidth value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} />
-                  )
-                )
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setSelectedTask(null)}>Cancel</Button>
-              <Button variant="contained" onClick={handleSave}>Save</Button>
-            </DialogActions>
-          </Dialog>
-        )}
+return (
+  <Box sx={{ width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
+    {/* Project Name Header */}
+    {projectName && (
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+        {projectName}
+      </Typography>
+    )}
+
+    {/* Centered Content */}
+    <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
+      {/* Search Bar */}
+      <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
+        <TextField label="Search by Name" variant="outlined" fullWidth value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </Box>
+
+      {/* Add Column Section */}
+      <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
+        <TextField label="New Column Name" variant="outlined" fullWidth value={newColumn} onChange={(e) => setNewColumn(e.target.value)} />
+        <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
+      </Box>
+
+      {/* Dynamic Table */}
+      <Box sx={{ width: "100%", height: 400 }}> {/* Fixed height to avoid ResizeObserver errors */}
+        <DataGrid 
+          rows={filteredRows} 
+          columns={cols} 
+          autoHeight={true} // Prevent dynamic height issues
+          checkboxSelection 
+          disableColumnMenu 
+        />
+      </Box>
+
+      {/* Edit Task Modal */}
+      {selectedTask && (
+        <Dialog open={true} onClose={() => setSelectedTask(null)} fullWidth>
+          <DialogTitle>Edit Task</DialogTitle>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, paddingTop: 2 }}>
+            {Object.keys(selectedTask).map((field) => 
+              field !== "id" && field !== "_id" && field !== "__v" && (
+                field === "status" ? (
+                  <Select key={field} value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} fullWidth>
+                    <MenuItem value="To Do">To Do</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="Done">Done</MenuItem>
+                  </Select>
+                ) : (
+                  <TextField key={field} label={field} variant="outlined" fullWidth value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} />
+                )
+              )
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setSelectedTask(null)}>Cancel</Button>
+            <Button variant="contained" onClick={handleSave}>Save</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
-  );
+  </Box>
+);
+
   
 };
 
