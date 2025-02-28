@@ -27,7 +27,7 @@ const DynamicTable = ({ projectId }) => {
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
       .then((response) => {
-        const columnNames = response.data.filter(col => col !== "_id" && col !== "__v");
+        const columnNames = response.data.filter(col => col !== "_id" && col !== "__v" && col !== "projectId");
 
         const formattedColumns = columnNames.map((col) => ({
           field: col,
