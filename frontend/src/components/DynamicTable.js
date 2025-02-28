@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, Select, MenuItem } from "@mui/material";
 import axios from "axios";
 
 const DynamicTable = ({ projectId }) => {
   const [rows, setRows] = useState([]);
   const [cols, setCols] = useState([]);
-  const [statusFilter, setStatusFilter] = useState(""); 
   const [searchQuery, setSearchQuery] = useState(""); 
-  const [newColumn, setNewColumn] = useState(""); // Track new column input
+  const [newColumn, setNewColumn] = useState(""); 
 
+  // Fetch tasks from the database
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
       .then((response) => {
@@ -24,6 +24,7 @@ const DynamicTable = ({ projectId }) => {
       });
   }, [projectId]);
 
+  // Fetch columns from the database
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
       .then((response) => {
@@ -32,7 +33,12 @@ const DynamicTable = ({ projectId }) => {
         const formattedColumns = columnNames.map((col) => ({
           field: col,
           headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-          width: 150, 
+          width: 150,
+          ...(col === "status" && { 
+            renderCell: (params) => (
+              <StatusDropdown row={params.row} projectId={projectId} updateTask={updateTask} />
+            )
+          }),
         }));
 
         setCols(formattedColumns);
@@ -42,49 +48,65 @@ const DynamicTable = ({ projectId }) => {
       });
   }, [projectId]);
 
+  // Function to update task status in backend
+  const updateTask = async (updatedTask) => {
+    setRows((prevTasks) =>
+      prevTasks.map((task) =>
+        task._id === updatedTask._id ? { ...task, status: updatedTask.status } : task
+      )
+    );
+
+    try {
+      await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask._id}`, {
+        status: updatedTask.status, // Send only the updated field
+      });
+    } catch (error) {
+      console.error("Error updating task:", error.response?.status, error.response?.data);
+      // Revert UI update if the request fails
+      setRows((prevTasks) =>
+        prevTasks.map((task) =>
+          task._id === updatedTask._id ? { ...task, status: task.status } : task
+        )
+      );
+    }
+  };
+
+  // Add a new column to the database
   const handleAddColumn = async () => {
-    if (!newColumn.trim()) return; // Ignore empty input
+    if (!newColumn.trim()) return; 
   
     try {
-      // Send request to backend to add the new attribute to all tasks in the project
       await axios.post(`http://localhost:5001/api/tasks/${projectId}/add-attribute`, {
         attributeName: newColumn,
-        defaultValue: "" // Default value for the new column
+        defaultValue: "" 
       });
-  
-      // Fetch updated tasks after adding new attribute
-      const updatedResponse = await axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`);
-      const updatedRows = updatedResponse.data.map(row => ({
-        ...row,
-        id: row._id,
-      }));
-  
-      setRows(updatedRows);
-  
-      // Add new column to UI
-      const newCol = {
-        field: newColumn,
-        headerName: newColumn.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
+
+      // Re-fetch updated data from the backend
+      const [updatedTasks, updatedColumns] = await Promise.all([
+        axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`),
+        axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
+      ]);
+
+      setRows(updatedTasks.data.map(row => ({ ...row, id: row._id })));
+      setCols(updatedColumns.data.map(col => ({
+        field: col,
+        headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
         width: 150,
-      };
-  
-      setCols([...cols, newCol]); 
+        ...(col === "status" && { 
+          renderCell: (params) => (
+            <StatusDropdown row={params.row} projectId={projectId} updateTask={updateTask} />
+          )
+        }),
+      })));
+
       setNewColumn(""); 
     } catch (error) {
       console.error("Error adding column:", error);
     }
   };
   
-  
-
-  const filteredRows = rows.filter((row) => {
-    const statusMatch = statusFilter === "" || row.status === statusFilter;
-    const searchMatch =
-      row.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      row.status.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return statusMatch && searchMatch;
-  });
+  // Apply search filter by name
+  const filteredRows = rows.filter((row) => row.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <Box
@@ -97,6 +119,7 @@ const DynamicTable = ({ projectId }) => {
       }}
     >
       <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
+        {/* Search Bar */}
         <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
           <TextField
             label="Search by Name"
@@ -119,6 +142,7 @@ const DynamicTable = ({ projectId }) => {
           <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
         </Box>
 
+        {/* Dynamic Table */}
         <DataGrid
           rows={filteredRows}
           columns={cols}
@@ -128,6 +152,39 @@ const DynamicTable = ({ projectId }) => {
         />
       </Box>
     </Box>
+  );
+};
+
+// Dropdown component for status
+const StatusDropdown = ({ row, projectId, updateTask }) => {
+  const [status, setStatus] = useState(row.status);
+
+  const handleChange = async (event) => {
+    const newStatus = event.target.value;
+    setStatus(newStatus); // Optimistically update UI
+
+    const updatedTask = { ...row, status: newStatus };
+
+    try {
+      await updateTask(updatedTask);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      setStatus(row.status); // Revert UI if API call fails
+    }
+  };
+
+  return (
+    <Select
+      value={status}
+      onChange={handleChange}
+      fullWidth
+      size="small"
+      variant="outlined"
+    >
+      <MenuItem value="To Do">To Do</MenuItem>
+      <MenuItem value="In Progress">In Progress</MenuItem>
+      <MenuItem value="Done">Done</MenuItem>
+    </Select>
   );
 };
 

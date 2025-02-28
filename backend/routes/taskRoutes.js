@@ -57,28 +57,30 @@ router.get("/:projectId/cols", async (req, res) => {
 });
 
 
+
 router.post("/:projectId/add-attribute", async (req, res) => {
     const { projectId } = req.params;
-    const { attributeName, defaultValue } = req.body; // New attribute name and default value
-  
-    if (!attributeName) {
-      return res.status(400).json({ error: "Attribute name is required" });
-    }
+    const { attributeName, defaultValue } = req.body;
   
     try {
-      // Update all tasks with the given projectId by adding the new attribute
+      if (!attributeName) {
+        return res.status(400).json({ error: "Attribute name is required" });
+      }
+  
+      // Update all tasks belonging to the project, adding the new field
       await Task.updateMany(
-        { projectId: projectId },
-        { $set: { [attributeName]: defaultValue || "" } } // Set default value if provided
+        { projectId },
+        { $set: { [attributeName]: defaultValue } } // Dynamically add the new field
       );
   
-      res.status(200).json({ message: "Attribute added successfully" });
+      res.status(200).json({ message: "Attribute added to all tasks" });
     } catch (error) {
       console.error("Error adding attribute:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
+  
 router.put("/tasks/:id", async (req, res) => {
     const { id } = req.params;
     const { status } = req.body; 
