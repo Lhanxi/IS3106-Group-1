@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
 import axios from "axios";
 
 const DynamicTable = ({ projectId }) => {
@@ -9,6 +9,7 @@ const DynamicTable = ({ projectId }) => {
   const [searchQuery, setSearchQuery] = useState(""); 
   const [newColumn, setNewColumn] = useState(""); 
   const [selectedTask, setSelectedTask] = useState(null); // Task selected for editing
+  const [projectName, setProjectName] = useState("");
 
   // Fetch tasks from the database
   useEffect(() => {
@@ -57,6 +58,25 @@ const DynamicTable = ({ projectId }) => {
       .catch((error) => console.error("Error fetching columns:", error));
   }, [projectId]);
 
+  useEffect(() => {
+    if (!projectId) {
+      console.error("Project ID is undefined");
+      return;
+    }
+  
+    axios.get(`http://localhost:5001/api/projects/${projectId}/name`) // Corrected API route
+      .then((response) => {
+        console.log("Project name response:", response.data); // Debugging log
+        if (response.data && response.data.name) {
+          setProjectName(response.data.name);
+        } else {
+          console.error("Invalid response format:", response.data);
+        }
+      })
+      .catch((error) => console.error("Error fetching project name:", error));
+  }, [projectId]);
+  
+  
   // Function to update task in backend
   const updateTask = async (updatedTask) => {
     setRows((prevTasks) =>
@@ -126,22 +146,30 @@ const DynamicTable = ({ projectId }) => {
   const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start", height: "100vh", width: "100vw" }}>
+    <Box sx={{ width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
+      {/* Project Name Header */}
+      {projectName && (
+        <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          {projectName}
+        </Typography>
+      )}
+  
+      {/* Centered Content */}
       <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
         {/* Search Bar */}
         <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
           <TextField label="Search by Name" variant="outlined" fullWidth value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </Box>
-
+  
         {/* Add Column Section */}
         <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
           <TextField label="New Column Name" variant="outlined" fullWidth value={newColumn} onChange={(e) => setNewColumn(e.target.value)} />
           <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
         </Box>
-
+  
         {/* Dynamic Table */}
         <DataGrid rows={filteredRows} columns={cols} autoHeight checkboxSelection disableColumnMenu />
-
+  
         {/* Edit Task Modal */}
         {selectedTask && (
           <Dialog open={true} onClose={() => setSelectedTask(null)} fullWidth>
@@ -170,6 +198,7 @@ const DynamicTable = ({ projectId }) => {
       </Box>
     </Box>
   );
+  
 };
 
 // Dropdown component for status
