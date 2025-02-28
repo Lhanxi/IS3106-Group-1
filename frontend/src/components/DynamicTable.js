@@ -14,9 +14,9 @@ const DynamicTable = ({ projectId }) => {
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
       .then((response) => {
-        const formattedRows = response.data.map(row => ({
-          ...row,
-          id: row._id, 
+        const formattedRows = response.data.map(({ _id, __v, ...rest }) => ({
+          ...rest,
+          id: _id, // Keep ID for selection, but hide it in the UI
         }));
         setRows(formattedRows);
       })
@@ -27,7 +27,7 @@ const DynamicTable = ({ projectId }) => {
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
       .then((response) => {
-        const columnNames = response.data;
+        const columnNames = response.data.filter(col => col !== "_id" && col !== "__v");
 
         const formattedColumns = columnNames.map((col) => ({
           field: col,
@@ -60,11 +60,11 @@ const DynamicTable = ({ projectId }) => {
   // Function to update task in backend
   const updateTask = async (updatedTask) => {
     setRows((prevTasks) =>
-      prevTasks.map((task) => (task._id === updatedTask._id ? updatedTask : task))
+      prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
     );
 
     try {
-      await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask._id}`, updatedTask);
+      await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask.id}`, updatedTask);
     } catch (error) {
       console.error("Error updating task:", error.response?.status, error.response?.data);
     }
@@ -104,8 +104,8 @@ const DynamicTable = ({ projectId }) => {
         axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
       ]);
 
-      setRows(updatedTasks.data.map(row => ({ ...row, id: row._id })));
-      setCols(updatedColumns.data.map(col => ({
+      setRows(updatedTasks.data.map(({ _id, __v, ...rest }) => ({ ...rest, id: _id })));
+      setCols(updatedColumns.data.filter(col => col !== "_id" && col !== "__v").map(col => ({
         field: col,
         headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
         width: 150,
@@ -123,7 +123,7 @@ const DynamicTable = ({ projectId }) => {
   };
   
   // Apply search filter by name
-  const filteredRows = rows.filter((row) => row.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start", height: "100vh", width: "100vw" }}>
