@@ -81,27 +81,27 @@ router.post("/:projectId/add-attribute", async (req, res) => {
   });
 
   
-router.put("/tasks/:id", async (req, res) => {
+  router.put("/tasks/:id", async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body; 
+    const updatedFields = req.body; // Accept all fields dynamically
 
     try {
-        // Find the task by ID and update its status
         const updatedTask = await Task.findByIdAndUpdate(
             id,
-            { status },
-            { new: true } 
+            updatedFields, // Apply all fields from req.body
+            { new: true, runValidators: true } // Return updated task & apply validators
         );
 
         if (!updatedTask) {
             return res.status(404).json({ message: "Task not found" });
         }
 
-        res.json(updatedTask); 
+        res.json(updatedTask);
     } catch (error) {
         console.error("Error updating task:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
+
 
 module.exports = router;
