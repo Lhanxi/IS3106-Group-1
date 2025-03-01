@@ -4,6 +4,38 @@ const Task = require("../models/Task");
 
 const router = express.Router();
 
+// Route to retrieve task schema fields based on projectId
+router.get("/:projectId/task-schema", async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        // Find any task belonging to the given project
+        const tasks = await Task.find({ projectId: new mongoose.Types.ObjectId(projectId) });
+
+        let schemaFields;
+
+        if (tasks.length > 0) {
+            // If tasks exist, extract unique attributes
+            const uniqueAttributes = new Set();
+            tasks.forEach(task => {
+                Object.keys(task.toObject()).forEach(key => uniqueAttributes.add(key));
+            });
+
+            schemaFields = Array.from(uniqueAttributes).filter(field => field !== "_id" && field !== "__v");
+        } else {
+            // If no tasks exist, return default attributes
+            schemaFields = ["name", "status", "description", "assignedTo", "dueDate"];
+        }
+
+        res.json(schemaFields);
+    } catch (error) {
+        console.error("Error retrieving task schema fields:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
+// Route to retrieve statuses based on projectId
 router.get("/:projectId/statuses", async (req, res) => {
     try {
         const { projectId } = req.params;
@@ -23,7 +55,7 @@ router.get("/:projectId/statuses", async (req, res) => {
     }
 });
 
-
+// Route to retrieve tasks based on projectId
 router.get("/:projectId/tasks", async (req, res) => {
     try {
         const projectId = req.params.projectId; 
@@ -35,6 +67,7 @@ router.get("/:projectId/tasks", async (req, res) => {
     }
 })
 
+// Route to retrieve attribute fields based on projectId (jeremy)
 router.get("/:projectId/cols", async (req, res) => {
     try {
         const projectId = req.params.projectId;
@@ -57,7 +90,7 @@ router.get("/:projectId/cols", async (req, res) => {
 });
 
 
-
+// Route to add attribute fields
 router.post("/:projectId/add-attribute", async (req, res) => {
     const { projectId } = req.params;
     const { attributeName, defaultValue } = req.body;
@@ -80,7 +113,32 @@ router.post("/:projectId/add-attribute", async (req, res) => {
     }
   });
 
-  
+  // Route to create new task based on projectId
+  router.post("/:projectId/tasks", async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const taskData = req.body;
+        taskData.projectId = new mongoose.Types.ObjectId(projectId);
+
+        // Convert dynamic fields into key-value pairs
+        if (taskData.dynamicFields) {
+            taskData.dynamicFields.forEach(field => {
+                taskData[field.name] = field.value;
+            });
+            delete taskData.dynamicFields;
+        }
+
+        const newTask = new Task(taskData);
+        await newTask.save();
+
+        res.status(201).json({ message: "Task created successfully!", task: newTask });
+    } catch (error) {
+            console.error("Error creating task:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+    }
+   });
+
+  // editing an existing task
   router.put("/tasks/:id", async (req, res) => {
     const { id } = req.params;
     const updatedFields = req.body; // Accept all fields dynamically
