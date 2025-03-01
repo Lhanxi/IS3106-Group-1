@@ -11,13 +11,20 @@ const connectDB = require("./config/db");
 // Route Handlers
 const userRoutes = require("./routes/userRoutes");
 const taskRoutes = require("./routes/taskRoutes");
+const forumRoutes = require("./routes/forumRoutes");
+
+require("dotenv").config();
 
 // Initialize Express App
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable all CORS requests
-app.use(express.json()); // Parse JSON bodies
+app.use(express.json());
+app.use(cors());
+app.use("/api", userRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api", forumRoutes); // KL: check if its supp to be like that
+
 
 // Database Connection
 connectDB();
