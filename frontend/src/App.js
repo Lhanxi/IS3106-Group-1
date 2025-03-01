@@ -6,7 +6,7 @@ import {
   Navigate
 } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Kanban from "./pages/Kanban";
+
 import KanbanCard from "./components/KanbanCard";
 import ForumPage from "./pages/FourmPage";
 import Login from "./pages/Login";
