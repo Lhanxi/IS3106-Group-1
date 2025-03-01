@@ -5,6 +5,9 @@ const taskSchema = new mongoose.Schema({
   name: String,
   status: String,
   description: String, 
+  startDate: Date,
+  dueDate: Date,
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   projectId: { type: mongoose.Schema.Types.ObjectId, ref: "Project" }
 });
 

@@ -1,59 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography, Tooltip } from "@mui/material";
+import mockTasks from "./mockTasks.json"; // Adjust the path as needed
 
-/** Example mock data. Replace with your actual tasks or fetched data */
-const sampleTasks = [
-  {
-    _id: "1",
-    name: "Task 1",
-    startDate: "2025-03-01T00:00:00.000Z",
-    dueDate:   "2025-03-10T00:00:00.000Z",
-  },
-  {
-    _id: "2",
-    name: "Task 2",
-    startDate: "2025-03-05T00:00:00.000Z",
-    dueDate:   "2025-03-15T00:00:00.000Z",
-  },
-  {
-    _id: "3",
-    name: "Task 3",
-    startDate: "2025-03-10T00:00:00.000Z",
-    dueDate:   "2025-03-20T00:00:00.000Z",
-  },
-  {
-    _id: "4",
-    name: "Task 4",
-    startDate: "2025-03-15T00:00:00.000Z",
-    dueDate:   "2025-03-25T00:00:00.000Z",
-  },
-  {
-    _id: "5",
-    name: "Task 5",
-    startDate: "2025-03-20T00:00:00.000Z",
-    dueDate:   "2025-03-30T00:00:00.000Z",
-  },
-  {
-    _id: "6",
-    name: "Task 6",
-    startDate: "2025-03-25T00:00:00.000Z",
-    dueDate:   "2025-04-05T00:00:00.000Z",
-  },
-  {
-    _id: "7",
-    name: "Task 7",
-    startDate: "2025-03-30T00:00:00.000Z",
-    dueDate:   "2025-04-10T00:00:00.000Z",
-  },
-  {
-    _id: "8",
-    name: "Task 8",
-    startDate: "2025-04-01T00:00:00.000Z",
-    dueDate:   "2025-04-15T00:00:00.000Z",
-  },
-];
-
-export default function Timeline() {
+const Timeline = ({ projectId }) => {
   const [tasks, setTasks] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -62,7 +11,7 @@ export default function Timeline() {
   useEffect(() => {
     // Instead of sampleTasks, you could do:
     // axios.get('/api/tasks').then(res => setTasks(res.data));
-    setTasks(sampleTasks);
+    setTasks(mockTasks);
   }, []);
 
   // Compute earliest start & latest end
@@ -99,6 +48,10 @@ export default function Timeline() {
     };
   };
 
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
+  };
+
   if (!startDate || !endDate) {
     return <Typography>Loading timeline...</Typography>;
   }
@@ -110,18 +63,17 @@ export default function Timeline() {
       </Typography>
 
       <Paper elevation={2} sx={{ p: 2 }}>
-        {/* Timeline Header: Start date and End date */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          mb={2}
-        >
-          <Typography variant="subtitle1">
-            {startDate.toDateString()}
-          </Typography>
-          <Typography variant="subtitle1">
-            {endDate.toDateString()}
-          </Typography>
+
+        {/* Date Axis */}
+        <Box display="flex" justifyContent="space-between" mb={2}>
+          {Array.from({ length: 10 }).map((_, index) => {
+            const date = new Date(startDate.getTime() + (index * (endDate - startDate) / 9));
+            return (
+              <Typography key={index} variant="caption">
+                {formatDate(date)}
+              </Typography>
+            );
+          })}
         </Box>
 
         {/* The actual timeline rows */}
@@ -137,40 +89,39 @@ export default function Timeline() {
                 height: 40, // each row's height
               }}
             >
-              {/* Task Name (absolutely positioned at the top-left of its row) */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  zIndex: 1,
-                  bgcolor: "#fff",
-                  border: 1,
-                  borderColor: "grey.300",
-                  borderRadius: 1,
-                  px: 1,
-                }}
-              >
-                <Typography variant="body2">
-                  {task.name}
-                </Typography>
-              </Box>
-
               {/* The bar itself (blue rectangle) */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 20, // move it below the label
-                  height: 20,
-                  bgcolor: "primary.main",
-                  borderRadius: 1,
-                  ...barStyle,
-                }}
-              />
+              <Tooltip
+                title={
+                  <React.Fragment>
+                    <Typography color="inherit">Start: {formatDate(new Date(task.startDate))}</Typography>
+                    <Typography color="inherit">Due: {formatDate(new Date(task.dueDate))}</Typography>
+                    <Typography color="inherit">Description: {task.description}</Typography>
+                  </React.Fragment>
+                }
+              >
+                  <Box
+                  sx={{
+                    position: "absolute",
+                    top: 10, // center vertically
+                    height: 50,
+                    bgcolor: "primary.main",
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    ...barStyle,
+                  }}
+                >
+                  <Typography variant="body3">{task.name}</Typography>
+                </Box>
+              </Tooltip>
             </Box>
           );
         })}
       </Paper>
     </Box>
   );
-}
+};
+
+export default Timeline;

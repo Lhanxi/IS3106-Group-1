@@ -12,6 +12,7 @@ import ForumPage from "./pages/FourmPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
+import Timeline from "./pages/Timeline";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<Login />} /> // Default route for login
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/timeline" element={<Timeline />} />
           <Route
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
