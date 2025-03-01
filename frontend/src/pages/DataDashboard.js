@@ -13,7 +13,10 @@ const DataDashboard = () => {
     const [showMenu, setShowMenu] = useState(false);
     const [widgetName, setWidgetName] = useState(""); // Stores user-entered name
     const [selectedWidget, setSelectedWidget] = useState(null); // Stores selected widget type
-    const [gridKey, setGridKey] = useState(Date.now());
+    const [menuVisible, setMenuVisible] = useState(null); // Track menu visibility
+    const [renamingWidget, setRenamingWidget] = useState(null); // Track widget being renamed
+    const [newName, setNewName] = useState(""); // Stores the new name during renaming
+    const [editingInline, setEditingInline] = useState(null); // Track inline renaming
 
     // Widget options
     const widgetOptions = [
@@ -25,9 +28,41 @@ const DataDashboard = () => {
     // Function to validate widget name (not empty & no only spaces)
     const isValidName = (name) => /^[^\s]+(\s+[^\s]+)*$/.test(name);
 
+    // Function to rename a widget
+    const renameWidget = (widgetId) => {
+        if (!isValidName(newName)) return; // Prevent renaming if invalid
+
+        setWidgets((prevWidgets) =>
+            prevWidgets.map((widget) =>
+                widget.i === widgetId ? { ...widget, title: newName } : widget
+            )
+        );
+        setRenamingWidget(null); // Hide rename input
+        setEditingInline(null); // Hide inline rename input
+    };
+
+    // Function to start renaming from the dropdown menu
+    const startRenameFromMenu = (widget) => {
+        setRenamingWidget(widget.i);
+        setNewName(widget.title);
+        setMenuVisible(null); // Close the menu
+    };
+
+    // Function to enable inline renaming on hover
+    const startInlineEdit = (widget) => {
+        setEditingInline(widget.i);
+        setNewName(widget.title);
+    };
+
+    // Function to apply inline rename
+    const applyInlineRename = (widgetId) => {
+        if (!isValidName(newName)) return;
+        renameWidget(widgetId);
+    };
+
     // Function to handle adding a widget
     const handleAddWidget = () => {
-        if (!selectedWidget || !isValidName(widgetName)) return; // Prevents empty or invalid names
+        if (!selectedWidget || !isValidName(widgetName)) return; // Prevent empty or invalid names
 
         const newWidget = {
             i: `${selectedWidget.id}-${Date.now()}`,
@@ -103,7 +138,7 @@ const DataDashboard = () => {
                     ))}
                     <button
                         onClick={handleAddWidget}
-                        disabled={!selectedWidget || !isValidName(widgetName)} // Disable if name is invalid
+                        disabled={!selectedWidget || !isValidName(widgetName)}
                         style={{
                             padding: "10px",
                             background: !selectedWidget || !isValidName(widgetName) ? "#ccc" : "#28a745",
@@ -117,37 +152,31 @@ const DataDashboard = () => {
             )}
 
             {/* Dashboard Layout */}
-            <GridLayout
-                key={gridKey}
-                className="layout"
-                layout={layout}
-                cols={12}
-                rowHeight={100}
-                width={1200}
-                onLayoutChange={(newLayout) => setLayout(newLayout)}
-            >
+            <GridLayout className="layout" layout={layout} cols={12} rowHeight={100} width={1200}>
                 {widgets.map((widget) => (
                     <div key={widget.i} style={{ background: "#fff", padding: "10px", position: "relative" }}>
                         {/* Three-dot menu */}
-                        <button
-                            onClick={() => removeWidgetById(widget.i)}
-                            style={{
-                                position: "absolute",
-                                top: "5px",
-                                right: "5px",
-                                background: "red",
-                                color: "white",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: "5px",
-                                borderRadius: "50%",
-                            }}
-                        >
-                            ❌
+                        <button onClick={() => setMenuVisible(widget.i)} style={{ position: "absolute", top: "5px", right: "5px", background: "transparent", border: "none", cursor: "pointer", padding: "5px" }}>
+                            <BsThreeDotsVertical size={20} />
                         </button>
 
-                        {/* Widget Title */}
-                        <h4 style={{ textAlign: "center", marginBottom: "5px" }}>{widget.title}</h4>
+                        {/* Dropdown Menu */}
+                        {menuVisible === widget.i && (
+                            <div style={{ position: "absolute", top: "30px", right: "5px", background: "#fff", border: "1px solid #ddd", borderRadius: "5px", boxShadow: "0px 4px 6px rgba(0,0,0,0.1)", zIndex: 10 }}>
+                                <button onClick={() => startRenameFromMenu(widget)} style={{ padding: "8px", display: "block", width: "100%" }}>✏ Rename Widget</button>
+                            </div>
+                        )}
+
+                        {/* Widget Title - Rename Options */}
+                        {renamingWidget === widget.i ? (
+                            <div>
+                                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} style={{ padding: "5px", width: "80%" }} />
+                                <button onClick={() => renameWidget(widget.i)} disabled={!isValidName(newName)}>✅ Confirm</button>
+                                <button onClick={() => setRenamingWidget(null)}>❌ Cancel</button>
+                            </div>
+                        ) : (
+                            <h4 onClick={() => startInlineEdit(widget)} style={{ textAlign: "center", marginBottom: "5px", cursor: "pointer", border: "1px solid transparent" }}>{widget.title}</h4>
+                        )}
 
                         {/* Widget Content */}
                         {renderWidget(widget)}
