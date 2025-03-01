@@ -1,0 +1,50 @@
+/* Container around the entire component */
+.timeline-container {
+    padding: 20px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  
+  /* The bounding box for the bars (not strictly necessary to be relative).
+     The tasks themselves will be position:relative. */
+  .timeline-body {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 10px;
+  }
+  
+  /* Each task is its own "row," each with a relative positioning context */
+  .timeline-task {
+    position: relative; 
+    margin-bottom: 20px; /* space between rows */
+    height: 40px;        /* fixed row height (adjust as needed) */
+  }
+  
+  /* The name label, absolute within the row so it can float over the bar. */
+  .task-name {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 0.9rem;
+  }
+  
+  /* The bar is absolutely positioned within each .timeline-task row. */
+  .task-bar {
+    position: absolute;
+    top: 20px;           /* push bar below the label */
+    height: 20px;
+    background-color: #007bff;
+    border-radius: 3px;
+  }
+  
