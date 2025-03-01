@@ -3,6 +3,8 @@ import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import BarChartWidget from "../components/BarChartWidget";
+import PieChartWidget from "../components/PieChartWidget";
+import LineChartWidget from "../components/LineChartWidget";
 
 const DataDashboard = () => {
     const [layout, setLayout] = useState([
@@ -22,6 +24,12 @@ const DataDashboard = () => {
             >
                 <div key="bar-chart" style={{ background: "#fff", padding: "10px" }}>
                     <BarChartWidget />
+                </div>
+                <div key="pie-chart" style={{ background: "#fff", padding: "10px" }}>
+                    <PieChartWidget />
+                </div>
+                <div key="line-chart" style={{ background: "#fff", padding: "10px" }}>
+                    <LineChartWidget />
                 </div>
             </GridLayout>
         </div>
