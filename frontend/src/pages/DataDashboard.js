@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { BsThreeDotsVertical } from "react-icons/bs"; // Three-dot menu icon
+import { BsThreeDotsVertical } from "react-icons/bs";
 import PieChartWidget from "../components/PieChartWidget";
 import LineChartWidget from "../components/LineChartWidget";
 import BarChartWidget from "../components/BarChartWidget";
@@ -11,46 +11,45 @@ const DataDashboard = () => {
     const [widgets, setWidgets] = useState([]);
     const [layout, setLayout] = useState([]);
     const [showMenu, setShowMenu] = useState(false);
-    const [menuVisible, setMenuVisible] = useState(null); // Track which widget menu is open
-    const [gridKey, setGridKey] = useState(Date.now()); // Force re-render fix
+    const [widgetName, setWidgetName] = useState(""); // Stores user-entered name
+    const [selectedWidget, setSelectedWidget] = useState(null); // Stores selected widget type
+    const [gridKey, setGridKey] = useState(Date.now());
 
-    // Available widget options
+    // Widget options
     const widgetOptions = [
         { id: "pie", name: "Pie Chart", component: <PieChartWidget /> },
         { id: "line", name: "Line Chart", component: <LineChartWidget /> },
         { id: "bar", name: "Bar Chart", component: <BarChartWidget /> },
     ];
 
-    // Function to add a widget
-    const addWidget = (widget) => {
+    // Function to validate widget name (not empty & no only spaces)
+    const isValidName = (name) => /^[^\s]+(\s+[^\s]+)*$/.test(name);
+
+    // Function to handle adding a widget
+    const handleAddWidget = () => {
+        if (!selectedWidget || !isValidName(widgetName)) return; // Prevents empty or invalid names
+
         const newWidget = {
-            i: `${widget.id}-${Date.now()}`,
+            i: `${selectedWidget.id}-${Date.now()}`,
             x: (widgets.length * 2) % 12,
-            y: Infinity, // Places at the bottom
+            y: Infinity,
             w: 4,
             h: 3,
-            type: widget.id,
+            type: selectedWidget.id,
+            title: widgetName, // Store the user-entered name
         };
 
         setWidgets([...widgets, newWidget]);
         setLayout([...layout, newWidget]);
         setShowMenu(false);
+        setWidgetName(""); // Reset name input
+        setSelectedWidget(null); // Reset selection
     };
 
-    // Function to remove a widget properly
-    const removeWidget = (id) => {
-        setWidgets((prevWidgets) => prevWidgets.filter((widget) => widget.i !== id));
-        setLayout((prevLayout) => prevLayout.filter((item) => item.i !== id));
-
-        // Force re-render of GridLayout
-        setTimeout(() => {
-            setGridKey(Date.now());
-        }, 50);
-    };
-
-    // Function to toggle menu visibility for a specific widget
-    const toggleMenu = (id) => {
-        setMenuVisible(menuVisible === id ? null : id);
+    // Function to remove a widget
+    const removeWidgetById = (widgetId) => {
+        setWidgets((prevWidgets) => prevWidgets.filter((widget) => widget.i !== widgetId));
+        setLayout((prevLayout) => prevLayout.filter((item) => item.i !== widgetId));
     };
 
     // Function to render the correct widget component
@@ -79,16 +78,41 @@ const DataDashboard = () => {
             {/* Widget Selection Menu */}
             {showMenu && (
                 <div style={{ background: "#f5f5f5", padding: "10px", borderRadius: "5px", marginBottom: "10px" }}>
-                    <h4>Select a Widget</h4>
+                    <h4>Select a Widget & Name It</h4>
+                    <input
+                        type="text"
+                        placeholder="Enter widget name"
+                        value={widgetName}
+                        onChange={(e) => setWidgetName(e.target.value)}
+                        style={{ padding: "8px", width: "100%", marginBottom: "10px" }}
+                    />
                     {widgetOptions.map((widget) => (
                         <button
                             key={widget.id}
-                            onClick={() => addWidget(widget)}
-                            style={{ margin: "5px", padding: "10px", background: "#ddd", cursor: "pointer" }}
+                            onClick={() => setSelectedWidget(widget)}
+                            style={{
+                                margin: "5px",
+                                padding: "10px",
+                                background: selectedWidget?.id === widget.id ? "#8884d8" : "#ddd",
+                                color: selectedWidget?.id === widget.id ? "white" : "black",
+                                cursor: "pointer",
+                            }}
                         >
                             {widget.name}
                         </button>
                     ))}
+                    <button
+                        onClick={handleAddWidget}
+                        disabled={!selectedWidget || !isValidName(widgetName)} // Disable if name is invalid
+                        style={{
+                            padding: "10px",
+                            background: !selectedWidget || !isValidName(widgetName) ? "#ccc" : "#28a745",
+                            color: "white",
+                            cursor: !selectedWidget || !isValidName(widgetName) ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        ✅ Confirm & Add Widget
+                    </button>
                 </div>
             )}
 
@@ -104,51 +128,26 @@ const DataDashboard = () => {
             >
                 {widgets.map((widget) => (
                     <div key={widget.i} style={{ background: "#fff", padding: "10px", position: "relative" }}>
-                        {/* Three-Dot Menu Button */}
+                        {/* Three-dot menu */}
                         <button
-                            onClick={() => toggleMenu(widget.i)}
+                            onClick={() => removeWidgetById(widget.i)}
                             style={{
                                 position: "absolute",
                                 top: "5px",
                                 right: "5px",
-                                background: "transparent",
+                                background: "red",
+                                color: "white",
                                 border: "none",
                                 cursor: "pointer",
                                 padding: "5px",
+                                borderRadius: "50%",
                             }}
                         >
-                            <BsThreeDotsVertical size={20} />
+                            ❌
                         </button>
 
-                        {/* Dropdown Menu */}
-                        {menuVisible === widget.i && (
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    top: "30px",
-                                    right: "5px",
-                                    background: "#fff",
-                                    border: "1px solid #ddd",
-                                    borderRadius: "5px",
-                                    boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-                                    zIndex: 10,
-                                }}
-                            >
-                                <button
-                                    onClick={() => removeWidget(widget.i)}
-                                    style={{
-                                        display: "block",
-                                        width: "100%",
-                                        padding: "8px",
-                                        border: "none",
-                                        background: "transparent",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    ❌ Remove Widget
-                                </button>
-                            </div>
-                        )}
+                        {/* Widget Title */}
+                        <h4 style={{ textAlign: "center", marginBottom: "5px" }}>{widget.title}</h4>
 
                         {/* Widget Content */}
                         {renderWidget(widget)}

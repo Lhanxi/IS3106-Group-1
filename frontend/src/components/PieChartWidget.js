@@ -22,7 +22,6 @@ const PieChartWidget = () => {
 
     return (
         <div style={{ width: "100%", height: "100%", background: "#fff", padding: "10px" }}>
-            <h4 style={{ textAlign: "center" }}>📊 Interactive Pie Chart</h4>
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie

@@ -11,7 +11,6 @@ const data = [
 const BarChartWidget = () => {
     return (
         <div style={{ width: "100%", height: "100%" }}>
-            <h4 style={{ textAlign: "center" }}>📊 Sales Data</h4>
             <ResponsiveContainer width="100%" height="80%">
                 <BarChart data={data}>
                     <XAxis dataKey="name" />
