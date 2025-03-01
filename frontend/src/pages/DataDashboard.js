@@ -146,7 +146,7 @@ const DataDashboard = () => {
                             cursor: !selectedWidget || !isValidName(widgetName) ? "not-allowed" : "pointer",
                         }}
                     >
-                        ✅ Confirm & Add Widget
+                        Confirm & Add Widget
                     </button>
                 </div>
             )}
@@ -163,6 +163,7 @@ const DataDashboard = () => {
                         {/* Dropdown Menu */}
                         {menuVisible === widget.i && (
                             <div style={{ position: "absolute", top: "30px", right: "5px", background: "#fff", border: "1px solid #ddd", borderRadius: "5px", boxShadow: "0px 4px 6px rgba(0,0,0,0.1)", zIndex: 10 }}>
+                                <button onClick={() => removeWidgetById(widget.i)} style={{ padding: "8px", display: "block", width: "100%", color: "red" }}>Remove Widget</button>
                                 <button onClick={() => startRenameFromMenu(widget)} style={{ padding: "8px", display: "block", width: "100%" }}>✏ Rename Widget</button>
                             </div>
                         )}
@@ -171,8 +172,8 @@ const DataDashboard = () => {
                         {renamingWidget === widget.i ? (
                             <div>
                                 <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} style={{ padding: "5px", width: "80%" }} />
-                                <button onClick={() => renameWidget(widget.i)} disabled={!isValidName(newName)}>✅ Confirm</button>
-                                <button onClick={() => setRenamingWidget(null)}>❌ Cancel</button>
+                                <button onClick={() => renameWidget(widget.i)} disabled={!isValidName(newName)}> Confirm</button>
+                                <button onClick={() => setRenamingWidget(null)}> Cancel</button>
                             </div>
                         ) : (
                             <h4 onClick={() => startInlineEdit(widget)} style={{ textAlign: "center", marginBottom: "5px", cursor: "pointer", border: "1px solid transparent" }}>{widget.title}</h4>
