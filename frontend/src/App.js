@@ -3,7 +3,7 @@ import axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Kanban from "./pages/Kanban";
 import KanbanCard from "./components/KanbanCard";
-
+import ForumPage from "./pages/FourmPage";
 
 // test feature, can just delete 
 function App() {
