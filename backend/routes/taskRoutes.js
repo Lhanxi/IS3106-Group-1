@@ -35,6 +35,7 @@ router.get("/:projectId/tasks", async (req, res) => {
     }
 })
 
+//will need to remove this once the set up is complete
 router.get("/:projectId/cols", async (req, res) => {
     try {
         const projectId = req.params.projectId;

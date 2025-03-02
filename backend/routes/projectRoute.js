@@ -34,6 +34,21 @@ router.get("/:projectId", async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  router.get("/api/tasks/:projectId/cols", async (req, res) => {
+    try {
+      const project = await Project.findById(req.params.projectId).lean();
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+  
+      const columnNames = project.defaultAttributes.map(attr => attr.name);
+      res.json(columnNames);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching columns" });
+    }
+  });
+  
   
 
 module.exports = router;
