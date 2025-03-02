@@ -13,16 +13,18 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import DynamicTable from "./components/DynamicTable";
+import AddColumnButton from "./components/AddColumnButton";
 
 function App() {
   return (
     <Router>
       <div>
         {/* Routes Setup */}
-        <Routes>
+        <Routes> 
           <Route path="/" element={<Login />} /> // Default route for login
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/test-column" element={<AddColumnButton />} />
           <Route path="/table" element={<DynamicTable projectId="67beb08ef0f0ca9e7f6db407" />} />
           <Route
             path="*"
