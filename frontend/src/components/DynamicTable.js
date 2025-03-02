@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
+import DropdownCell from "./DropdownCell";
+import AddColumn from "./AddColumn";
 import axios from "axios";
 
 const DynamicTable = ({ projectId }) => {
@@ -10,6 +12,7 @@ const DynamicTable = ({ projectId }) => {
   const [newColumn, setNewColumn] = useState(""); 
   const [selectedTask, setSelectedTask] = useState(null); // Task selected for editing
   const [projectName, setProjectName] = useState("");
+  const [isAddColumnOpen, setIsAddColumnOpen] = useState(false); //used to manage the add column pop up
 
   // Fetch tasks from the database
   useEffect(() => {
@@ -23,7 +26,7 @@ const DynamicTable = ({ projectId }) => {
       })
       .catch((error) => console.error("Error fetching tasks:", error));
   }, [projectId]);
-
+/*
   // Fetch columns from the database
   useEffect(() => {
     axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
@@ -57,6 +60,49 @@ const DynamicTable = ({ projectId }) => {
       })
       .catch((error) => console.error("Error fetching columns:", error));
   }, [projectId]);
+  */
+
+  useEffect(() => {
+    axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
+      .then((response) => {
+        const columnNames = response.data.filter(col => col !== "_id" && col !== "__v" && col !== "projectId");
+  
+        axios.get(`http://localhost:5001/api/projects/${projectId}`)
+          .then((projectResponse) => {
+            const project = projectResponse.data;
+            const dropdownColumns = project.defaultAttributes
+              .filter(attr => attr.type === "dropdown")
+              .map(attr => attr.name);
+  
+            const formattedColumns = columnNames.map((col) => ({
+              field: col,
+              headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
+              width: 150,
+              ...(dropdownColumns.includes(col) && { 
+                renderCell: (params) => (
+                  <DropdownCell row={params.row} column={col} projectId={projectId} updateTask={updateTask} />
+                )
+              }),
+            }));
+  
+            //Edit button
+            formattedColumns.push({
+              field: "actions",
+              headerName: "Actions",
+              width: 120,
+              renderCell: (params) => (
+                <Button size="small" variant="contained" onClick={() => handleEditClick(params.row)}>
+                  Edit
+                </Button>
+              ),
+            });
+  
+            setCols(formattedColumns);
+          });
+      })
+      .catch((error) => console.error("Error fetching columns:", error));
+  }, [projectId]);
+  
 
   useEffect(() => {
     if (!projectId) {
@@ -108,6 +154,42 @@ const DynamicTable = ({ projectId }) => {
     }
   };
 
+  const handleAddColumn = async (columnData) => {
+    try {
+      await axios.post(`http://localhost:5001/api/projects/${projectId}/add-attribute`, columnData);
+  
+      // Re-fetch updated columns
+      const updatedProject = await axios.get(`http://localhost:5001/api/projects/${projectId}`);
+      const updatedColumns = updatedProject.data.defaultAttributes.map((attr) => ({
+        field: attr.name,
+        headerName: attr.name.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
+        width: 150,
+        ...(attr.type === "dropdown" && { 
+          renderCell: (params) => (
+            <DropdownCell row={params.row} column={attr.name} projectId={projectId} updateTask={updateTask} />
+          )
+        }),
+      }));
+  
+      setCols([...updatedColumns, {
+        field: "actions",
+        headerName: "Actions",
+        width: 120,
+        renderCell: (params) => (
+          <Button size="small" variant="contained" onClick={() => handleEditClick(params.row)}>
+            Edit
+          </Button>
+        ),
+      }]);
+  
+      setIsAddColumnOpen(false); // Close popup
+    } catch (error) {
+      console.error("Error adding column:", error);
+    }
+  };
+  
+
+  /*
   // Add a new column
   const handleAddColumn = async () => {
     if (!newColumn.trim()) return; 
@@ -142,6 +224,7 @@ const DynamicTable = ({ projectId }) => {
     }
   };
   
+*/
   // Apply search filter by name
   const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -161,11 +244,10 @@ return (
         <TextField label="Search by Name" variant="outlined" fullWidth value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </Box>
 
-      {/* Add Column Section */}
-      <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
-        <TextField label="New Column Name" variant="outlined" fullWidth value={newColumn} onChange={(e) => setNewColumn(e.target.value)} />
-        <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
-      </Box>
+      <Button variant="contained" onClick={() => setIsAddColumnOpen(true)}>
+        Add Column
+      </Button>
+
 
       {/* Dynamic Table */}
       <Box sx={{ width: "100%", height: 400 }}> {/* Fixed height to avoid ResizeObserver errors */}
@@ -204,12 +286,18 @@ return (
         </Dialog>
       )}
     </Box>
+    <AddColumn
+      open={isAddColumnOpen} 
+      onClose={() => setIsAddColumnOpen(false)} 
+      onSubmit={handleAddColumn} 
+    />
+
   </Box>
 );
 
   
 };
-
+/*
 // Dropdown component for status
 const StatusDropdown = ({ row, projectId, updateTask }) => {
   const [status, setStatus] = useState(row.status);
@@ -226,5 +314,5 @@ const StatusDropdown = ({ row, projectId, updateTask }) => {
     <MenuItem value="Done">Done</MenuItem>
   </Select>;
 };
-
+*/
 export default DynamicTable;
