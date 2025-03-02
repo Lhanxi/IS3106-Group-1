@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
 import DropdownCell from "./DropdownCell";
-import AddColumn from "./AddColumn";
+//import AddColumn from "./AddColumn";
 import axios from "axios";
 
 const DynamicTable = ({ projectId }) => {
@@ -286,11 +286,6 @@ return (
         </Dialog>
       )}
     </Box>
-    <AddColumn
-      open={isAddColumnOpen} 
-      onClose={() => setIsAddColumnOpen(false)} 
-      onSubmit={handleAddColumn} 
-    />
 
   </Box>
 );
