@@ -20,6 +20,7 @@ router.get("/:projectId/name", async (req, res) => {
 });
 
 router.get("/:projectId", async (req, res) => {
+     // Send the full project data
     try {
       const { projectId } = req.params;
       const project = await Project.findById(projectId);
@@ -28,7 +29,7 @@ router.get("/:projectId", async (req, res) => {
         return res.status(404).json({ message: "Project not found" });
       }
   
-      res.json(project); // Send the full project data
+      res.json(project);
     } catch (error) {
       console.error("Error fetching project:", error);
       res.status(500).json({ message: "Internal server error" });
