@@ -34,7 +34,7 @@ router.get("/:projectId", async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
     }
   });
-
+/*
   router.get("/api/tasks/:projectId/cols", async (req, res) => {
     try {
       const project = await Project.findById(req.params.projectId).lean();
@@ -46,6 +46,72 @@ router.get("/:projectId", async (req, res) => {
       res.json(columnNames);
     } catch (error) {
       res.status(500).json({ message: "Error fetching columns" });
+    }
+  });
+  */
+
+  router.get("/:projectId/cols", async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        console.log(`Fetching columns for project: ${projectId}`);
+
+        // Get the project using the projectId
+        const project = await Project.findById(projectId).lean();
+        if (!project) {
+            console.log("Project not found");
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Extract top-level fields and attributes
+        const topLevelFields = ["name", "projectId"]; // Only include these top-level fields
+        const attributeKeys = project.defaultAttributes.map(attr => attr.name); // Get attribute names from defaultAttributes
+
+        // Combine top-level fields with attribute names
+        const columnNames = [...topLevelFields, ...attributeKeys];
+
+        console.log("Final column list:", columnNames);
+
+        // Return the final list of column names
+        res.json(columnNames);
+    } catch (error) {
+        console.error("Error fetching columns:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+
+
+  
+  router.post("/:projectId/add-column", async (req, res) => {
+    const { projectId } = req.params;
+    const { columnName, columnType, dropdownOptions } = req.body;
+  
+    try {
+      // Step 1: Add the column to the project metadata
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+  
+      const newColumn = {
+        name: columnName,
+        type: columnType,
+        options: columnType === "dropdown" ? dropdownOptions : []
+      };
+  
+      project.defaultAttributes.push(newColumn);
+      await project.save();
+  
+      // Step 2: Update all tasks in the project to include this new column
+      await Task.updateMany(
+        { projectId },
+        { $set: { [columnName]: columnType === "dropdown" ? dropdownOptions[0] : "" } }
+      );
+  
+      res.status(200).json({ message: "Column added to project and tasks" });
+    } catch (error) {
+      console.error("Error adding column:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
   
