@@ -94,7 +94,7 @@ const RequestForm = () => {
         try {
             await axios.post(`http://localhost:5001/api/tasks/${projectId}/tasks`, taskData);
             reset();
-            setOpenDialog(true); // ✅ Open confirmation dialog
+            setOpenDialog(true); 
         } catch (error) {
             console.error("Error creating task:", error);
         }
@@ -115,31 +115,26 @@ const RequestForm = () => {
                 </Typography>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     
-                    {/* ✅ Name Field */}
                     <TextField
                         {...register("name", { required: true })}
                         label="Task Name" fullWidth required sx={{ mb: 2 }}
                     />
 
-                    {/* ✅ Status Field */}
                     <TextField
                         {...register("status", { required: true })}
                         label="Status" fullWidth required sx={{ mb: 2 }}
                     />
 
-                    {/* ✅ Description Field */}
                     <TextField
                         {...register("description", { required: true })}
                         label="Description" fullWidth required sx={{ mb: 2 }}
                     />
 
-                    {/* ✅ Project ID (Disabled) */}
                     <TextField
                         {...register("projectId")}
                         label="Project ID" fullWidth disabled value={projectId} sx={{ mb: 2 }}
                     />
 
-                    {/* ✅ Additional Attributes */}
                     <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Additional Attributes</Typography>
                     {fields.map((field, index) => (
                         <Box key={field.id} display="flex" alignItems="center" sx={{ mb: 2 }}>
@@ -160,7 +155,6 @@ const RequestForm = () => {
                         </Box>
                     ))}
 
-                    {/* ✅ Add Attribute Button */}
                     <Button 
                         variant="contained" fullWidth sx={{ mt: 2, mb: 2 }} 
                         onClick={() => append({ name: "", value: "" })}
@@ -168,7 +162,6 @@ const RequestForm = () => {
                         ➕ Add Attribute
                     </Button>
 
-                    {/* ✅ Submit Button */}
                     <Button 
                         type="submit" variant="contained" color="primary" fullWidth sx={{ mb: 2 }}
                     >
@@ -176,7 +169,6 @@ const RequestForm = () => {
                     </Button>
                 </form>
 
-                {/* ✅ Success Dialog */}
                 <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                     <DialogTitle>Task Created</DialogTitle>
                     <DialogContent>
