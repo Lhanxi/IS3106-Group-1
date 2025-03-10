@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
-import DropdownCell from "./DropdownCell";
-import AddColumnButton from "./AddColumnButton";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import axios from "axios";
+import EditTaskModal from "./EditTaskModal";
+import AddColumnButton from "./AddColumnButton";
+import DropdownCell from "./DropdownCell";  // Import DropdownCell
 
 const DynamicTable = ({ projectId }) => {
   const [rows, setRows] = useState([]);
   const [cols, setCols] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); 
-  const [newColumn, setNewColumn] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newColumn, setNewColumn] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
   const [projectName, setProjectName] = useState("");
   const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
+  const [dropdownColumns, setDropdownColumns] = useState([]);  // To store columns with dropdowns
 
   useEffect(() => {
     if (!projectId) {
@@ -31,6 +33,9 @@ const DynamicTable = ({ projectId }) => {
             const dropdownColumns = project.defaultAttributes
               .filter(attr => attr.type === "dropdown")
               .map(attr => attr.name);
+
+            // Save the dropdown columns
+            setDropdownColumns(dropdownColumns);
 
             axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
               .then((taskResponse) => {
@@ -53,7 +58,12 @@ const DynamicTable = ({ projectId }) => {
                   width: 150,
                   ...(dropdownColumns.includes(col) && {
                     renderCell: (params) => (
-                      <DropdownCell row={params.row} column={col} projectId={projectId} updateTask={updateTask} />
+                      <DropdownCell
+                        row={params.row}
+                        column={col}
+                        projectId={projectId}
+                        updateTask={updateTask}
+                      />
                     )
                   }),
                 }));
@@ -95,14 +105,14 @@ const DynamicTable = ({ projectId }) => {
     setRows((prevTasks) =>
       prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))  // Update the task in state
     );
-  
+
     try {
       await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask.id}`, updatedTask);  // Save updated task to the server
     } catch (error) {
       console.error("Error updating task:", error.response?.status, error.response?.data);
     }
   };
-  
+
   // Open edit modal
   const handleEditClick = (task) => {
     setSelectedTask(task);
@@ -114,16 +124,16 @@ const DynamicTable = ({ projectId }) => {
   };
 
   // Save edited task
-  const handleSave = async () => {
-    if (selectedTask) {
-      await updateTask(selectedTask);
+  const handleSave = async (updatedTask) => {
+    if (updatedTask) {
+      await updateTask(updatedTask);
       setSelectedTask(null);
     }
   };
 
   // Handle adding new column
   const handleAddColumn = async () => {
-    if (!newColumn.trim()) return; 
+    if (!newColumn.trim()) return;
 
     try {
       await axios.post(`http://localhost:5001/api/projects/${projectId}/add-attribute`, {
@@ -140,7 +150,7 @@ const DynamicTable = ({ projectId }) => {
         },
       ]);
 
-      setNewColumn(""); 
+      setNewColumn("");
       setIsAddColumnOpen(false);
     } catch (error) {
       console.error("Error adding column:", error);
@@ -199,22 +209,14 @@ const DynamicTable = ({ projectId }) => {
           </Box>
         )}
 
-        {selectedTask && (
-          <Dialog open={true} onClose={() => setSelectedTask(null)} fullWidth>
-            <DialogTitle>Edit Task</DialogTitle>
-            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, paddingTop: 2 }}>
-              {Object.keys(selectedTask).map((field) => 
-                field !== "id" && field !== "_id" && field !== "__v" && (
-                  <TextField key={field} label={field} variant="outlined" fullWidth value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} />
-                )
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setSelectedTask(null)}>Cancel</Button>
-              <Button variant="contained" onClick={handleSave}>Save</Button>
-            </DialogActions>
-          </Dialog>
-        )}
+        <EditTaskModal
+          open={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          task={selectedTask || {}}
+          onSave={handleSave}
+          onFieldChange={handleFieldChange}
+          dropdownColumns={dropdownColumns}  // Pass dropdown columns to the modal
+        />
       </Box>
     </Box>
   );
