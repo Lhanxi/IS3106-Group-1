@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import "./CreateColumn.css"; 
+import "./CreateColumn.css";
+import axios from "axios";
 
 const columnTypes = ["text", "number", "dropdown", "date", "people"];
 
-const CreateColumn = ({ open, onClose }) => {
+const CreateColumn = ({ open, onClose, projectId }) => {
   const [columnName, setColumnName] = useState("");
   const [columnType, setColumnType] = useState("text");
   const [dropdownOptions, setDropdownOptions] = useState([""]);
@@ -28,36 +29,43 @@ const CreateColumn = ({ open, onClose }) => {
     setDropdownOptions(newOptions);
   };
 
-
-  const handleSubmit = () => {
-    //this will need to push to the backend
+  const handleSubmit = async () => {
+    if (!columnName.trim()) return; // Prevent submission if column name is empty
+  
     const newColumn = {
-      name: columnName.trim(),
-      type: columnType,
-      options: columnType === "dropdown" ? dropdownOptions.filter(opt => opt.trim() !== "") : undefined
+      columnName: columnName.trim(),
+      columnType: columnType,
+      dropdownOptions: columnType === "dropdown" ? dropdownOptions.filter(opt => opt.trim() !== "") : []
     };
-
-    console.log("New Column:", newColumn);
-    
-    setColumnName("");
-    setColumnType("text");
-    setDropdownOptions([""]);
-    
-    onClose();
+  
+    try {
+      // Send the new column to the backend via POST request
+      console.log("Submitting column:", newColumn); // Debugging: Check the payload
+  
+      const response = await axios.post(`http://localhost:5001/api/projects/${projectId}/add-column`, newColumn);
+  
+      console.log("Column added successfully:", response.data); // Check backend response
+  
+      // Reset form state
+      setColumnName("");
+      setColumnType("text");
+      setDropdownOptions([""]);
+  
+      // Close the modal
+      onClose();
+    } catch (error) {
+      console.error("Error adding column:", error);
+    }
   };
+  
 
   if (!open) return null;
 
   return (
     <div className="popup-overlay">
       <div className="popup-content">
-        {/* Close Button */}
         <button className="close-btn" onClick={onClose}>✕</button>
-
-        {/* Header */}
         <h2 className="popup-title">Add New Column</h2>
-
-        {/* Column Name Input */}
         <input
           type="text"
           placeholder="Column Name"
@@ -65,8 +73,6 @@ const CreateColumn = ({ open, onClose }) => {
           onChange={(e) => setColumnName(e.target.value)}
           className="input-field"
         />
-
-        {/* Column Type Dropdown */}
         <label className="label">Column Type</label>
         <select
           value={columnType}
@@ -77,8 +83,6 @@ const CreateColumn = ({ open, onClose }) => {
             <option key={type} value={type}>{type}</option>
           ))}
         </select>
-
-        {/* Dropdown Options (if "dropdown" is selected) */}
         {columnType === "dropdown" && (
           <div className="dropdown-options">
             <label className="label">Dropdown Options</label>
@@ -90,22 +94,18 @@ const CreateColumn = ({ open, onClose }) => {
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   className="input-field"
                 />
-                <button 
-                  onClick={() => handleRemoveOption(index)} 
-                  disabled={dropdownOptions.length === 1} 
+                <button
+                  onClick={() => handleRemoveOption(index)}
+                  disabled={dropdownOptions.length === 1}
                   className="remove-option"
                 >
                   ✕
                 </button>
               </div>
             ))}
-            <button onClick={handleAddOption} className="add-option-btn">
-              + Add Option
-            </button>
+            <button onClick={handleAddOption} className="add-option-btn">+ Add Option</button>
           </div>
         )}
-
-        {/* Action Buttons (Side by Side) */}
         <div className="button-group">
           <button onClick={onClose} className="cancel-btn">Cancel</button>
           <button onClick={handleSubmit} className="add-btn">Add Column</button>

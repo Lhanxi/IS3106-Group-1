@@ -3,7 +3,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import axios from "axios";
 import EditTaskModal from "./EditTaskModal";
-import AddColumnButton from "./AddColumnButton";
+import AddColumnButton from "./AddColumnButton";  // Keep the AddColumnButton
+import CreateColumn from "./CreateColumn";  // Import CreateColumn
 import DropdownCell from "./DropdownCell";  // Import DropdownCell
 
 const DynamicTable = ({ projectId }) => {
@@ -191,7 +192,7 @@ const DynamicTable = ({ projectId }) => {
           </Box>
 
           <Box>
-            <AddColumnButton onClick={() => setIsAddColumnOpen(true)} />
+            <AddColumnButton  projectId={projectId} onClick={() => setIsAddColumnOpen(true) } />  {/* Keep AddColumnButton visible */}
           </Box>
         </Box>
 

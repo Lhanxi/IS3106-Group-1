@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project"); 
+const Task = require("../models/Task");
 
 // Correct route definition
 router.get("/:projectId/name", async (req, res) => {
@@ -83,39 +84,43 @@ router.get("/:projectId", async (req, res) => {
 
 
   
-  router.post("/:projectId/add-column", async (req, res) => {
-    const { projectId } = req.params;
-    const { columnName, columnType, dropdownOptions } = req.body;
-  
-    try {
-      // Step 1: Add the column to the project metadata
-      const project = await Project.findById(projectId);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-  
-      const newColumn = {
-        name: columnName,
-        type: columnType,
-        options: columnType === "dropdown" ? dropdownOptions : []
-      };
-  
-      project.defaultAttributes.push(newColumn);
-      await project.save();
-  
-      // Step 2: Update all tasks in the project to include this new column
-      await Task.updateMany(
-        { projectId },
-        { $set: { [columnName]: columnType === "dropdown" ? dropdownOptions[0] : "" } }
-      );
-  
-      res.status(200).json({ message: "Column added to project and tasks" });
-    } catch (error) {
-      console.error("Error adding column:", error);
-      res.status(500).json({ message: "Internal server error" });
+router.post("/:projectId/add-column", async (req, res) => {
+  const { projectId } = req.params;
+  const { columnName, columnType, dropdownOptions } = req.body;
+
+  try {
+    // Step 1: Add the column to the project metadata (defaultAttributes)
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
-  });
-  
-  
+
+    const newColumn = {
+      name: columnName,
+      type: columnType,
+      options: columnType === "dropdown" ? dropdownOptions : [] // If it's a dropdown, add options
+    };
+
+    // Add the new column to the project's defaultAttributes
+    project.defaultAttributes.push(newColumn);
+    await project.save();
+
+    // Step 2: If it's a task, update all tasks in the project to reflect the new column
+    await Task.updateMany(
+      { projectId },
+      {
+        $set: {
+          [`attributes.${columnName}`]: columnType === "dropdown" ? dropdownOptions[0] : "" // Set default value for tasks
+        }
+      }
+    );
+
+    res.status(200).json({ message: "Column added to project and tasks" });
+  } catch (error) {
+    console.error("Error adding column:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 module.exports = router;
