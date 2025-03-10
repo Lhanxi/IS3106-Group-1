@@ -1,18 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, 
-  Button, TextField, MenuItem, IconButton, FormControl, InputLabel, Select 
-} from "@mui/material";
-import { Add, Remove } from "@mui/icons-material";
-
-const columnTypes = ["text", "number", "dropdown", "date", "people"];
-
-const AddColumn = ({ open, onClose, onSubmit }) => {
+const AddColumn = ({ open, onClose, projectId, onUpdateTable }) => {
   const [columnName, setColumnName] = useState("");
   const [columnType, setColumnType] = useState("text");
   const [dropdownOptions, setDropdownOptions] = useState([""]);
 
-  // Reset dropdown options when switching column types
   useEffect(() => {
     if (columnType !== "dropdown") {
       setDropdownOptions([""]);
@@ -35,17 +25,33 @@ const AddColumn = ({ open, onClose, onSubmit }) => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newColumn = {
       name: columnName.trim(),
       type: columnType,
-      options: columnType === "dropdown" ? dropdownOptions.filter(opt => opt.trim() !== "") : undefined
+      dropdownOptions: columnType === "dropdown" ? dropdownOptions.filter(opt => opt.trim() !== "") : []
     };
-    onSubmit(newColumn);
-    setColumnName("");
-    setColumnType("text");
-    setDropdownOptions([""]);
-    onClose();
+
+    try {
+      // Send POST request to add the new column
+      await axios.post(`/api/projects/${projectId}/add-column`, newColumn);
+
+      // Fetch updated project and tasks after adding the new column
+      const updatedProject = await axios.get(`/api/projects/${projectId}`);
+      const updatedTasks = await axios.get(`/api/tasks/${projectId}/tasks`);
+
+      // Update the DynamicTable with the new columns and data
+      onUpdateTable(updatedProject.data, updatedTasks.data);
+
+      // Close the dialog and reset form
+      setColumnName("");
+      setColumnType("text");
+      setDropdownOptions([""]);
+      onClose();
+    } catch (error) {
+      console.error("Error adding column:", error);
+      alert("Failed to add column");
+    }
   };
 
   return (
@@ -60,7 +66,6 @@ const AddColumn = ({ open, onClose, onSubmit }) => {
           margin="dense"
         />
 
-        {/* Fix: Using FormControl + Select instead of TextField with select */}
         <FormControl fullWidth margin="dense">
           <InputLabel>Column Type</InputLabel>
           <Select

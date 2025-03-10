@@ -28,7 +28,9 @@ const CreateColumn = ({ open, onClose }) => {
     setDropdownOptions(newOptions);
   };
 
+
   const handleSubmit = () => {
+    //this will need to push to the backend
     const newColumn = {
       name: columnName.trim(),
       type: columnType,
