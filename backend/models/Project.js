@@ -1,18 +1,9 @@
 const mongoose = require("mongoose");
 
-/*
-To allow for the most flexible level of storage, the project will only store metadata about tasks.
-Each project has:
-1. A `name` (required).
-2. `defaultAttributes`: An array storing metadata about the attributes (columns) of tasks.
-   - `name`: The attribute name (e.g., "status", "priority").
-   - `type`: The data type ("text", "number", "dropdown", "date", "people"). These are the only ones that we are currently allowing. 
-   - `options`: If the type is "dropdown", this stores the allowed values.
-*/
-
 const projectSchema = new mongoose.Schema({
     name: { type: String, required: true }, // Project name is mandatory
-    defaultAttributes: [
+    people: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Assigned Users
+    attributes: [
         {
             name: { type: String, required: true },
             type: { 
@@ -22,7 +13,24 @@ const projectSchema = new mongoose.Schema({
             }, 
             options: { type: [String], default: undefined } // Only used for dropdowns
         }
-    ]
-});
+    ],
+    tasks: [{
+        name: { type: String, required: true }, // Task Name
+        status: {
+            type: String,
+            enum: ["Not Started", "In-progress", "Completed"],
+            required: true,
+            default: "Not Started"
+        },
+        priority: {
+            type: String,
+            enum: ["Low", "Medium", "High"], // Ensure priority follows dropdown options
+            required: true,
+            default: "Medium"
+        },
+        deadline: { type: Date, required: true },
+        assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }] // Users assigned to task
+    }]
+}, { timestamps: true });
 
 module.exports = mongoose.model("Project", projectSchema);

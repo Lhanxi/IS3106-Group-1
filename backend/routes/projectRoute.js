@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project"); 
-const Task = require("../models/Task");
 
 // Correct route definition
 router.get("/:projectId/name", async (req, res) => {
@@ -19,6 +18,18 @@ router.get("/:projectId/name", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+//returns the list of projects that the user belongs to 
+router.get("/:userId/getProjects", async (req, res) => {
+  try {
+    const projects = await Project.find({ members: userId });
+    return projects;
+  } catch (error) {
+      console.error("Error fetching projects:", error);
+      throw error;
+  }
+});
+
 
 router.get("/:projectId", async (req, res) => {
      // Send the full project data

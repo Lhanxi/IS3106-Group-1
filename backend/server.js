@@ -10,7 +10,6 @@ const connectDB = require("./config/db");
 
 // Route Handlers
 const userRoutes = require("./routes/userRoutes");
-const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoute");
 const forumRoutes = require("./routes/forumRoutes");
 
@@ -24,7 +23,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use("/api", userRoutes);
-app.use("/api/tasks", taskRoutes);
+//app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api", forumRoutes); // KL: check if its supp to be like that
 
@@ -38,7 +37,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
+//app.use("/api/tasks", taskRoutes);
 
 // Handle Undefined Routes
 app.use((req, res, next) => {
