@@ -52,7 +52,7 @@ const DynamicTable = ({ projectId }) => {
           return {
             field: fieldName,
             headerName: attr.name,
-            width: 150,
+            width: 200,
             renderCell: (params) => {
               if (attr.type === "dropdown") {
                 return (
@@ -66,7 +66,10 @@ const DynamicTable = ({ projectId }) => {
 
               if (attr.type === "date") {
                 return (  
-                  <DateSelectorCell value={params.value} />
+                  <DateSelectorCell
+                    value={params.value}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
                 )
               }
 
