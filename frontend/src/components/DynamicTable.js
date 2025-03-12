@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 const DynamicTable = ({ projectId }) => {
   const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
   const [tasks, setTasks] = useState([]); // updates the rows for each of the tasks
+  const [peopleMap, setPeopleMap] = useState({}); //hashmap for ID -> Name
 
   const handleUpdate = async (taskId, field, newValue) => {
     try {
@@ -46,6 +47,13 @@ const DynamicTable = ({ projectId }) => {
 
         const project = response.data; 
 
+        // Fetch people list separately
+        const peopleResponse = await axios.get(`api/projects/${projectId}/people`); 
+        const peopleMap = peopleResponse.data; 
+
+        setPeopleMap(peopleMap); // Store in state
+        console.log("People Hash Map:", peopleMap);
+
         const tableColumns = project.attributes.map((attr, index) => {
           const fieldName = attr.name.replace(/\s+/g, "").charAt(0).toLowerCase() + attr.name.slice(1); // Ensure lowercase first letter
         
@@ -73,6 +81,18 @@ const DynamicTable = ({ projectId }) => {
                 )
               }
 
+              if (attr.type === "people") {
+                return (
+                  <DropdownCell
+                    value={params.value}
+                    options={project.people.map(personId => (
+                      peopleMap[personId]))}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
+                );
+              }
+              
+
 
               return <span>{params.value}</span>;
             },
@@ -88,7 +108,7 @@ const DynamicTable = ({ projectId }) => {
           status: task.status,
           priority: task.priority,
           deadline: task.deadline ? dayjs(task.deadline) : null,
-           assignedTo: task.assignedTo.map(user => `${user.firstName} ${user.lastName}`).join(", "), // Convert assigned users to names
+          assignedTo: task.assignedTo.map(personId => peopleMap[personId] || "Unknown").join(", "),
         }));
 
         console.log("Formatted Tasks:", formattedTasks);

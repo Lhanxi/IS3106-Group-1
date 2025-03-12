@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project"); 
+const User = require("../models/User");
 
 // Correct route definition
 router.get("/:projectId/name", async (req, res) => {
@@ -35,9 +36,7 @@ router.get("/:projectId", async (req, res) => {
      // Get the full project
     try {
       const { projectId } = req.params;
-      const project = await Project.findById(projectId)
-        .populate("people", "firstName lastName")
-        .populate("tasks.assignedTo", "firstName lastName");
+      const project = await Project.findById(projectId);
 
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
@@ -87,6 +86,35 @@ router.get("/:projectId", async (req, res) => {
       res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
+
+  router.get("/:projectId/people", async (req, res) => {
+    try {
+      const { projectId } = req.params;
+  
+      // Find the project by ID and populate the "people" field
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+  
+      // Get all users from the database
+      const allUsers = await User.find({}, "_id firstName lastName");
+  
+      // Filter only the users present in project.people
+      const peopleMap = {};
+      allUsers.forEach(user => {
+        if (project.people.includes(user._id.toString())) {
+          peopleMap[user._id] = `${user.firstName} ${user.lastName}`;
+        }
+      });
+  
+      res.json(peopleMap);
+    } catch (error) {
+      console.error("Error fetching people:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   
 
 
