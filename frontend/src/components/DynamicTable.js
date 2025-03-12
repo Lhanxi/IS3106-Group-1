@@ -92,7 +92,24 @@ const DynamicTable = ({ projectId }) => {
                 );
               }
               
-
+              if (attr.type === "text") {
+                return (
+                  <input
+                    type="text"
+                    value={params.value}
+                    onChange={(e) =>
+                      handleUpdate(params.row.id, attr.name.toLowerCase(), e.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      background: "transparent",
+                      outline: "none",
+                      fontSize: "inherit",
+                    }}
+                  />
+                );
+              }
 
               return <span>{params.value}</span>;
             },
