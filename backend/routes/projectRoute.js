@@ -35,8 +35,10 @@ router.get("/:projectId", async (req, res) => {
      // Get the full project
     try {
       const { projectId } = req.params;
-      const project = await Project.findById(projectId);
-      
+      const project = await Project.findById(projectId)
+        .populate("people", "firstName lastName")
+        .populate("tasks.assignedTo", "firstName lastName");
+
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }

@@ -88,7 +88,7 @@ const DynamicTable = ({ projectId }) => {
           status: task.status,
           priority: task.priority,
           deadline: task.deadline ? dayjs(task.deadline) : null,
-          assignedTo: task.assignedTo.join(", "), // Convert assigned users to a string
+           assignedTo: task.assignedTo.map(user => `${user.firstName} ${user.lastName}`).join(", "), // Convert assigned users to names
         }));
 
         console.log("Formatted Tasks:", formattedTasks);
