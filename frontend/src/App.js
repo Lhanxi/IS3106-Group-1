@@ -25,7 +25,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
           <Route path="/test-column" element={<AddColumnButton />} />
-          <Route path="/table" element={<DynamicTable projectId="67ce9caaa48e165af43a61ce" />} />
+          <Route path="/table" element={<DynamicTable projectId="67d1861e973edb6ba1bee5b9" />} />
           <Route
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login

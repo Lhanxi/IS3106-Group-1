@@ -1,225 +1,84 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, TextField, Typography } from "@mui/material";
 import axios from "axios";
-import EditTaskModal from "./EditTaskModal";
-import AddColumnButton from "./AddColumnButton";  // Keep the AddColumnButton
-import CreateColumn from "./CreateColumn";  // Import CreateColumn
-import DropdownCell from "./DropdownCell";  // Import DropdownCell
+import DropdownCell from "./DropdownCell";
 
 const DynamicTable = ({ projectId }) => {
-  const [rows, setRows] = useState([]);
-  const [cols, setCols] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [newColumn, setNewColumn] = useState("");
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [projectName, setProjectName] = useState("");
-  const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
-  const [dropdownColumns, setDropdownColumns] = useState([]);  // To store columns with dropdowns
+  const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
+  const [tasks, setTasks] = useState([]); // updates the rows for each of the tasks
 
   useEffect(() => {
-    if (!projectId) {
-      console.error("Project ID is undefined");
-      return;
+    const getColsAndTasks = async () => {
+      try {
+        console.log("Fetching project data for projectId:", projectId);
+
+        const response = await axios.get(`api/projects/${projectId}`); 
+        console.log("API Response:", response.data);
+
+        const project = response.data; 
+
+        const tableColumns = project.attributes.map((attr, index) => {
+          const fieldName = attr.name.replace(/\s+/g, "").charAt(0).toLowerCase() + attr.name.slice(1); // Ensure lowercase first letter
+        
+          return {
+            field: fieldName,
+            headerName: attr.name,
+            width: 150,
+            renderCell: (params) => {
+              console.log(`Rendering cell for field: ${attr.name}, Value:`, params.value);
+        
+              if (attr.type === "dropdown") {
+                return <DropdownCell value={params.value} options={attr.options} />; 
+              }
+        
+              return <span>{params.value}</span>;
+            },
+            key: `column-${index}` // Ensure unique column keys
+          };
+        });
+        
+        
+        
+        
+
+        console.log("Generated Columns:", tableColumns);
+
+        const formattedTasks = project.tasks.map((task) => ({
+          id: task._id,
+          name: task.name,
+          status: task.status,
+          priority: task.priority,
+          deadline: new Date(task.deadline).toLocaleDateString(),
+          assignedTo: task.assignedTo.join(", "), // Convert assigned users to a string
+        }));
+
+        console.log("Formatted Tasks:", formattedTasks);
+
+        setCols(tableColumns);
+        console.log("Updated Columns State:", tableColumns);
+
+        setTasks(formattedTasks);
+        console.log("Updated Tasks State:", formattedTasks);
+      } catch (error) {
+        console.error("Error fetching columns and tasks: ", error);
+      }
+    };
+
+    if (projectId) {
+      getColsAndTasks();
     }
-
-    // Fetch columns, project details, and tasks
-    axios.get(`http://localhost:5001/api/projects/${projectId}/cols`)
-      .then((columnResponse) => {
-        const columnNames = columnResponse.data.filter(col => col !== "_id" && col !== "__v" && col !== "projectId");
-
-        axios.get(`http://localhost:5001/api/projects/${projectId}`)
-          .then((projectResponse) => {
-            const project = projectResponse.data;
-            const dropdownColumns = project.defaultAttributes
-              .filter(attr => attr.type === "dropdown")
-              .map(attr => attr.name);
-
-            // Save the dropdown columns
-            setDropdownColumns(dropdownColumns);
-
-            axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
-              .then((taskResponse) => {
-                const formattedRows = taskResponse.data.map(({ _id, attributes, ...rest }) => {
-                  const rowData = { ...rest, id: _id };
-                  if (attributes) {
-                    Object.keys(attributes).forEach((key) => {
-                      rowData[key] = attributes[key];
-                    });
-                  }
-                  return rowData;
-                });
-
-                setRows(formattedRows);
-
-                // Format columns dynamically
-                const formattedColumns = columnNames.map((col) => ({
-                  field: col,
-                  headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-                  width: 150,
-                  ...(dropdownColumns.includes(col) && {
-                    renderCell: (params) => (
-                      <DropdownCell
-                        row={params.row}
-                        column={col}
-                        projectId={projectId}
-                        updateTask={updateTask}
-                      />
-                    )
-                  }),
-                }));
-
-                formattedColumns.push({
-                  field: "actions",
-                  headerName: "Actions",
-                  width: 120,
-                  renderCell: (params) => (
-                    <Button size="small" variant="contained" onClick={() => handleEditClick(params.row)}>
-                      Edit
-                    </Button>
-                  ),
-                });
-
-                setCols(formattedColumns);
-              })
-              .catch((error) => console.error("Error fetching tasks:", error));
-          })
-          .catch((error) => console.error("Error fetching project details:", error));
-      })
-      .catch((error) => console.error("Error fetching project columns:", error));
   }, [projectId]);
-
-  useEffect(() => {
-    axios.get(`http://localhost:5001/api/projects/${projectId}/name`)
-      .then((response) => {
-        if (response.data?.name) {
-          setProjectName(response.data.name);
-        } else {
-          console.error("Invalid response format:", response.data);
-        }
-      })
-      .catch((error) => console.error("Error fetching project name:", error));
-  }, [projectId]);
-
-  // Function to update a task
-  const updateTask = async (updatedTask) => {
-    setRows((prevTasks) =>
-      prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))  // Update the task in state
-    );
-
-    try {
-      await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask.id}`, updatedTask);  // Save updated task to the server
-    } catch (error) {
-      console.error("Error updating task:", error.response?.status, error.response?.data);
-    }
-  };
-
-  // Open edit modal
-  const handleEditClick = (task) => {
-    setSelectedTask(task);
-  };
-
-  // Handle input change in edit modal
-  const handleFieldChange = (field, value) => {
-    setSelectedTask((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Save edited task
-  const handleSave = async (updatedTask) => {
-    if (updatedTask) {
-      await updateTask(updatedTask);
-      setSelectedTask(null);
-    }
-  };
-
-  // Handle adding new column
-  const handleAddColumn = async () => {
-    if (!newColumn.trim()) return;
-
-    try {
-      await axios.post(`http://localhost:5001/api/projects/${projectId}/add-attribute`, {
-        attributeName: newColumn,
-        defaultValue: ""
-      });
-
-      setCols((prevCols) => [
-        ...prevCols,
-        {
-          field: newColumn,
-          headerName: newColumn.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-          width: 150,
-        },
-      ]);
-
-      setNewColumn("");
-      setIsAddColumnOpen(false);
-    } catch (error) {
-      console.error("Error adding column:", error);
-    }
-  };
-
-  // Apply search filter by name
-  const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <Box sx={{ width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
-      {projectName && (
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
-          {projectName}
-        </Typography>
-      )}
-
-      <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, marginBottom: "20px" }}>
-          <TextField
-            label="Search by Name"
-            variant="outlined"
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-          <Box sx={{ flexGrow: 1, height: 400 }}>
-            <DataGrid 
-              rows={filteredRows} 
-              columns={cols} 
-              autoHeight 
-              checkboxSelection 
-              disableColumnMenu 
-            />
-          </Box>
-
-          <Box>
-            <AddColumnButton  projectId={projectId} onClick={() => setIsAddColumnOpen(true) } />  {/* Keep AddColumnButton visible */}
-          </Box>
-        </Box>
-
-        {isAddColumnOpen && (
-          <Box sx={{ display: "flex", gap: 2, marginTop: "10px" }}>
-            <TextField
-              label="New Column Name"
-              variant="outlined"
-              value={newColumn}
-              onChange={(e) => setNewColumn(e.target.value)}
-            />
-            <Button variant="contained" onClick={handleAddColumn}>
-              Add
-            </Button>
-          </Box>
-        )}
-
-        <EditTaskModal
-          open={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
-          task={selectedTask || {}}
-          onSave={handleSave}
-          onFieldChange={handleFieldChange}
-          dropdownColumns={dropdownColumns}  // Pass dropdown columns to the modal
-        />
-      </Box>
-    </Box>
+    <div style={{ height: 400, width: "100%" }}>
+      <DataGrid
+          rows={tasks}
+          columns={cols}
+          getRowId={(task) => task.id}
+          pageSize={5}
+          disableSelectionOnClick
+      />
+    </div>
   );
 };
 
