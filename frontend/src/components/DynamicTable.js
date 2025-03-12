@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import DropdownCell from "./DropdownCell";
+import DateSelectorCell from "./DateSelectorCell";
+import dayjs from "dayjs";
 
 const DynamicTable = ({ projectId }) => {
   const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
@@ -61,6 +63,14 @@ const DynamicTable = ({ projectId }) => {
                   />
                 );
               }
+
+              if (attr.type === "date") {
+                return (  
+                  <DateSelectorCell value={params.value} />
+                )
+              }
+
+
               return <span>{params.value}</span>;
             },
             key: `column-${index}` // Ensure unique column keys
@@ -74,7 +84,7 @@ const DynamicTable = ({ projectId }) => {
           name: task.name,
           status: task.status,
           priority: task.priority,
-          deadline: new Date(task.deadline).toLocaleDateString(),
+          deadline: task.deadline ? dayjs(task.deadline) : null,
           assignedTo: task.assignedTo.join(", "), // Convert assigned users to a string
         }));
 

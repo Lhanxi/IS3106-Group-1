@@ -76,21 +76,21 @@ async function seedDatabase() {
                     name: "Create Wireframes",
                     status: "Not Started",
                     priority: "High",
-                    deadline: new Date("2025-03-20"),
+                    deadline: new Date("2025-03-20T00:00:00.000Z").toISOString(),
                     assignedTo: [users[0]._id]
                 },
                 {
                     name: "Develop Frontend",
                     status: "In-progress",
                     priority: "Medium",
-                    deadline: new Date("2025-04-01"),
+                    deadline: new Date("2025-04-01T00:00:00.000Z").toISOString(),
                     assignedTo: [users[1]._id]
                 },
                 {
                     name: "Setup Backend",
                     status: "Completed",
                     priority: "Low",
-                    deadline: new Date("2025-03-15"),
+                    deadline: new Date("2025-03-15T00:00:00.000Z").toISOString(),
                     assignedTo: [users[2]._id]
                 }
             ]
