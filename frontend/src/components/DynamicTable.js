@@ -9,6 +9,7 @@ const DynamicTable = ({ projectId }) => {
   const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
   const [tasks, setTasks] = useState([]); // updates the rows for each of the tasks
   const [peopleMap, setPeopleMap] = useState({}); //hashmap for ID -> Name
+  const [projectName, setProjectName] = useState();
 
   const handleUpdate = async (taskId, field, newValue) => {
     try {
@@ -46,6 +47,8 @@ const DynamicTable = ({ projectId }) => {
         console.log("API Response:", response.data);
 
         const project = response.data; 
+
+        setProjectName(project.name);
 
         // Fetch people list separately
         const peopleResponse = await axios.get(`api/projects/${projectId}/people`); 
@@ -146,16 +149,34 @@ const DynamicTable = ({ projectId }) => {
   }, [projectId]);
 
   return (
-    <div style={{ height: 400, width: "100%" }}>
-      <DataGrid
+    <div 
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", // Stack header and grid vertically
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh",  // Make it take the full height of the screen
+        width: "100vw"    // Make it take the full width of the screen
+      }}
+    >
+      <div style={{ marginBottom: "20px" }}>  {/* Space between header and grid */}
+        <h1>{projectName}</h1>  {/* Display the project name */}
+      </div>
+  
+      <div style={{ width: "80%", maxWidth: "1200px" }}> {/* Adjust width as needed */}
+        <DataGrid
           rows={tasks}
           columns={cols}
           getRowId={(task) => task.id}
           pageSize={5}
           disableSelectionOnClick
-      />
+          autoHeight  // Automatically adjust height to fit content
+        />
+      </div>
     </div>
   );
+  
+  
 };
 
 export default DynamicTable;
