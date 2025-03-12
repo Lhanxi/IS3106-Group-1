@@ -32,7 +32,7 @@ router.get("/:userId/getProjects", async (req, res) => {
 
 
 router.get("/:projectId", async (req, res) => {
-     // Send the full project data
+     // Get the full project
     try {
       const { projectId } = req.params;
       const project = await Project.findById(projectId);
@@ -47,21 +47,46 @@ router.get("/:projectId", async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
     }
   });
-/*
-  router.get("/api/tasks/:projectId/cols", async (req, res) => {
+
+  router.patch("/:projectId/update-task/:taskId", async (req, res) => {
     try {
-      const project = await Project.findById(req.params.projectId).lean();
+      const { projectId, taskId } = req.params;
+      const { field, newValue } = req.body; // Expecting field name and new value
+  
+      console.log("Received update request:", { projectId, taskId, field, newValue });
+  
+      // Fetch the project
+      const project = await Project.findById(projectId);
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
   
-      const columnNames = project.defaultAttributes.map(attr => attr.name);
-      res.json(columnNames);
+      // Find the task within the project
+      const taskIndex = project.tasks.findIndex((task) => task._id.toString() === taskId);
+      if (taskIndex === -1) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+  
+      // Debug: Log task before updating
+      console.log("Before update:", project.tasks[taskIndex]);
+  
+      // Update the specific field in the task
+      project.tasks[taskIndex][field] = newValue;
+  
+      // Save the updated project
+      await project.save();
+  
+      // Debug: Log updated task
+      console.log("After update:", project.tasks[taskIndex]);
+  
+      res.status(200).json({ message: "Task updated successfully", updatedTask: project.tasks[taskIndex] });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching columns" });
+      console.error("Error updating task:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
-  */
+  
+
 
   router.get("/:projectId/cols", async (req, res) => {
     try {

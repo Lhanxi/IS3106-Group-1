@@ -7,8 +7,35 @@ const DynamicTable = ({ projectId }) => {
   const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
   const [tasks, setTasks] = useState([]); // updates the rows for each of the tasks
 
+  const handleUpdate = async (taskId, field, newValue) => {
+    try {
+      // 1. Construct the API request payload
+      const payload = { field, newValue };
+  
+      // 2. Send a PATCH request with taskId included in the URL
+      const response = await axios.patch(`/api/projects/${projectId}/update-task/${taskId}`, payload);
+  
+      if (response.status !== 200) {  // Fixing incorrect status check
+        throw new Error(`Failed to update ${field}: ${response.statusText}`);
+      }
+  
+      // 3. Update only the relevant task in `tasks`
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId ? { ...task, [field]: newValue } : task
+        )
+      );
+  
+      console.log(`Updated ${field} for task ${taskId} to:`, newValue);
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error.response ? error.response.data : error.message);
+    }
+  };
+  
+
   useEffect(() => {
     const getColsAndTasks = async () => {
+      //updates the columnns and tasks for the table
       try {
         console.log("Fetching project data for projectId:", projectId);
 
@@ -25,22 +52,21 @@ const DynamicTable = ({ projectId }) => {
             headerName: attr.name,
             width: 150,
             renderCell: (params) => {
-              console.log(`Rendering cell for field: ${attr.name}, Value:`, params.value);
-        
               if (attr.type === "dropdown") {
-                return <DropdownCell value={params.value} options={attr.options} />; 
+                return (
+                  <DropdownCell
+                    value={params.value}
+                    options={attr.options}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
+                );
               }
-        
               return <span>{params.value}</span>;
             },
             key: `column-${index}` // Ensure unique column keys
           };
         });
         
-        
-        
-        
-
         console.log("Generated Columns:", tableColumns);
 
         const formattedTasks = project.tasks.map((task) => ({
