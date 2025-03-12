@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import DynamicTable from "./components/DynamicTable";
 import AddColumnButton from "./components/AddColumnButton";
+import CreateProjectPage from "./pages/CreateProject";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
           />
+          <Route path="create-project" element={<CreateProjectPage />}/>
         </Routes>
       </div>
     </Router>

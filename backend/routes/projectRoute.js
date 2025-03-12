@@ -113,4 +113,38 @@ router.get('/projects/by-user/:userId', async (req, res) => {
 });
 
 
+// POST endpoint to create a new project
+router.post('/new-project', async (req, res) => {
+  const { name, people, tasks } = req.body;
+
+  // Validate that required fields are provided
+  if (!name || !people || !Array.isArray(people)) {
+    return res.status(400).json({ message: 'Project name and people are required.' });
+  }
+
+  // Optionally: Check if all provided people IDs are valid users
+  try {
+    // Create the new project
+    const newProject = new Project({
+      name,
+      people,
+      attributes: [
+        //by default they will have these attributes
+        { name: 'Name', type: 'text' },
+        { name: 'Status', type: 'dropdown', options: ['Not Started', 'In-progress', 'Completed'] },
+        { name: 'Priority', type: 'dropdown', options: ['Low', 'Medium', 'High'] },
+        { name: 'Deadline', type: 'date' },
+        { name: 'AssignedTo', type: 'people' },
+      ],
+      tasks: tasks || [],
+    });
+
+    const savedProject = await newProject.save();
+    res.status(201).json(savedProject);
+  } catch (error) {
+    console.error('Error creating project:', error);
+    res.status(500).json({ message: 'Error creating project' });
+  }
+});
+
 module.exports = router;
