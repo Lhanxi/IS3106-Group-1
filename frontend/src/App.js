@@ -3,27 +3,31 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate
+  Navigate,
 } from "react-router-dom";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 import KanbanCard from "./components/KanbanCard";
 import ForumPage from "./pages/FourmPage";
+import CustomCalendar from "./pages/Calendar";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
-import Timeline from "./pages/Timeline";
+// import RequestForm from "./pages/RequestForm";
+// import RequestFormButton from "./components/buttons/RequestFormButton";
 
 function App() {
   return (
     <Router>
       <div>
+        {/* <RequestFormButton projectId={"67c2ed808213682387a8ecb7"} /> */}
         {/* Routes Setup */}
         <Routes>
           <Route path="/" element={<Login />} /> // Default route for login
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/timeline" element={<Timeline />} />
+          <Route path="/calendar" element={<CustomCalendar />} />
+          {/* <Route path="/form/:projectId" element={<RequestForm />} /> */}
           <Route
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
@@ -35,8 +39,6 @@ function App() {
 }
 
 export default App;
-
-
 
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
@@ -51,7 +53,7 @@ export default App;
 
 // App.post("/", async(req, res) => {
 //   const {email, password} = req.body;
-  
+
 //   try{
 //     const check=await mongoose.model("User").findOne({email: email}); // need to fix this
 
@@ -67,7 +69,7 @@ export default App;
 
 // App.post("/signup", async(req, res) => {
 //   const {email, password} = req.body;
-  
+
 //   const user = new mongoose.model("User")({
 //     email: email,
 //     password: password
@@ -91,7 +93,7 @@ export default App;
 //   console.log("Server has started");
 // });
 
-// // test feature, can just delete 
+// // test feature, can just delete
 // function App() {
 //   const [users, setUsers] = useState([]);
 //   const projectId = "67beb08ef0f0ca9e7f6db407"; // temporarily used for testing purposes, free to edit away
