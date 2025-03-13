@@ -1,23 +1,19 @@
 const express = require("express"); 
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-// Create a User (Test)
-router.post("/users", async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    const newUser = new User({ name, email, password });
-    await newUser.save();
-    res.status(201).json(newUser);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Helper function to generate JWT
+const generateToken = (id, email) => {
+  return jwt.sign({ id, email }, process.env.JWT_SECRET, {
+    expiresIn: '30d' // Adjust the expiry as necessary
+  });
+};
 
 // Get all Users (Test)
-router.get("/users", async (req, res) => {
+router.get("/", async (req, res) => {
     try {
       const users = await User.find();
       res.status(200).json(users);
@@ -26,48 +22,71 @@ router.get("/users", async (req, res) => {
     }
   });
 
-  // POST /api/users/login - Login a user
+// Login a user
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-      const user = await User.findOne({ email });
-      if (user && (await user.matchPassword(password))) { // Assuming password check logic
-          res.json({
-              _id: user._id,
-              email: user.email,
-              // token: generateToken(user._id), // Assuming JWT token generation, not added in model, do we need?
-          });
-      } else {
-          res.status(401).json({ message: "Invalid email or password" });
-      }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    console.log('User found:', user);
+    console.log("Plain password:", password);
+    console.log("Hashed password from DB:", user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password matches:', isMatch);
+
+    if (isMatch) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: generateToken(user._id)
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
   } catch (error) {
-      res.status(500).json({ message: "Server error" + req.url + error});
+    console.error('Login error:', error);
+    res.status(500).json({ message: "Server error" + req.url + error});
   }
 });
 
-// POST /api/users/signup - Register a new user
-router.post('/signup', async (req, res) => {
+// Backend: Node.js/Express - User Signup Route
+router.post("/signup", async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Please enter all required fields" });
+  }
+
   try {
-      const userExists = await User.findOne({ email });
-      if (userExists) {
-          res.status(400).json({ message: "User already exists" });
-      } else {
-          const user = new User({
-              email,
-              password // Ensure password hashing is handled
-          });
-          await user.save();
-          res.status(201).json({
-              _id: user._id,
-              email: user.email,
-              // token: generateToken(user._id),
-          });
-      }
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    console.log("Hashed password on signup:", hashedPassword);
+
+    const newUser = new User({ email, password: hashedPassword });
+    await newUser.save();
+
+    const token = generateToken(newUser._id, newUser.email);
+    res.status(201).json({
+      _id: newUser._id,
+      email: newUser.email,
+      token
+    });
   } catch (error) {
-      res.status(500).json({ message: "Server error" + req.url + error});
+    console.error("Signup error:", error);
+    res.status(500).json({ message: "Error processing your request" });
   }
 });
+
+
 
 
 module.exports = router;
