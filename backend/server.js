@@ -13,9 +13,7 @@ const userRoutes = require("./routes/userRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoute");
 const forumRoutes = require("./routes/forumRoutes");
-
-
-require("dotenv").config();
+const meetingRoutes = require("./routes/meetingRoutes");
 
 // Initialize Express App
 const app = express();
@@ -23,9 +21,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use("/api", userRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/meetings", meetingRoutes);
 app.use("/api", forumRoutes); // KL: check if its supp to be like that
 
 // Database Connection
@@ -37,16 +36,14 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
 
 // Handle Undefined Routes
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).send("Sorry can't find that!" + req.url);
 });
 
 // Error Handling Middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });

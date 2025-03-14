@@ -9,21 +9,20 @@ function Login() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-
         try {
             const res = await axios.post('http://localhost:5001/api/users/login', {
                 email,
                 password
             });
-            navigate("/home", { state: { id: email } }); // Navigate to home on successful signup
-            if (res.data.message === "User exists") {
-                navigate("/home", { state: { id: email } }); // Navigate on successful login
-            } else if (res.data.message === "User does not exist") {
-                alert("User has not registered an account.");
+            if (res.data.token) {
+                localStorage.setItem('token', res.data.token); // Store the token in local storage
+                navigate("/home"); // Navigate to home on successful login
+            } else {
+                alert("Login failed: " + res.data.message);
             }
         } catch (error) {
-            alert("Wrong email or password."); // Generic error alert
-            console.error(error); // Log error details for debugging
+            console.error("Login Error:", error);
+            alert("Login failed: " + (error.response?.data.message || "Unknown error"));
         }
     }
 

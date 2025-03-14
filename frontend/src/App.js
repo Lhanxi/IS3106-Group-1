@@ -15,12 +15,15 @@ import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 // import RequestForm from "./pages/RequestForm";
 // import RequestFormButton from "./components/buttons/RequestFormButton";
+import Timeline from "./pages/Timeline";
+import NavBar from "./components/NavBar";
 
 function App() {
   return (
     <Router>
       <div>
         {/* <RequestFormButton projectId={"67c2ed808213682387a8ecb7"} /> */}
+        <NavBar />
         {/* Routes Setup */}
         <Routes>
           <Route path="/" element={<Login />} /> // Default route for login
@@ -28,6 +31,8 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/calendar" element={<CustomCalendar />} />
           {/* <Route path="/form/:projectId" element={<RequestForm />} /> */}
+          <Route path="/timeline" element={<Timeline />} />
+          <Route path="/forumposts" element={<ForumPage />} />
           <Route
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
