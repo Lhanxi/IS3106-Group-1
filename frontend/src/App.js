@@ -24,6 +24,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
           <Route path="/timeline" element={<Timeline />} />
+          <Route path="/forumposts" element={<ForumPage />} />
           <Route
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
