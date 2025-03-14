@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Box, Paper, Typography, Tooltip } from "@mui/material";
+import { Box, Paper, Typography, Tooltip, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import mockTasks from "./mockTasks.json"; // Adjust the path as needed
 
 const Timeline = ({ projectId }) => {
   const [tasks, setTasks] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [visibleTasks, setVisibleTasks] = useState({});
 
   // Simulate a data fetch
   useEffect(() => {
     // Instead of sampleTasks, you could do:
     // axios.get('/api/tasks').then(res => setTasks(res.data));
     setTasks(mockTasks);
+    setVisibleTasks(mockTasks.reduce((acc, task) => {
+      acc[task._id] = true;
+      return acc;
+    }, {}));
   }, []);
 
   // Compute earliest start & latest end
@@ -52,6 +58,13 @@ const Timeline = ({ projectId }) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
   };
 
+  const toggleVisibility = (taskId) => {
+    setVisibleTasks((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
   if (!startDate || !endDate) {
     return <Typography>Loading timeline...</Typography>;
   }
@@ -79,6 +92,7 @@ const Timeline = ({ projectId }) => {
         {/* The actual timeline rows */}
         {tasks.map((task) => {
           const barStyle = calculateBarPosition(task);
+          const isVisible = visibleTasks[task._id];
 
           return (
             <Box
@@ -87,6 +101,7 @@ const Timeline = ({ projectId }) => {
                 position: "relative",
                 mb: 3,
                 height: 40, // each row's height
+                display: isVisible ? 'block' : 'none',
               }}
             >
               {/* The bar itself (blue rectangle) */}
@@ -99,7 +114,7 @@ const Timeline = ({ projectId }) => {
                   </React.Fragment>
                 }
               >
-                  <Box
+                <Box
                   sx={{
                     position: "absolute",
                     top: 10, // center vertically
@@ -116,6 +131,12 @@ const Timeline = ({ projectId }) => {
                   <Typography variant="body3">{task.name}</Typography>
                 </Box>
               </Tooltip>
+              <IconButton
+                sx={{ position: "absolute", right: 0, top: 10 }}
+                onClick={() => toggleVisibility(task._id)}
+              >
+                {isVisible ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
             </Box>
           );
         })}

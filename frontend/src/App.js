@@ -13,11 +13,13 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import Timeline from "./pages/Timeline";
+import NavBar from "./components/NavBar";
 
 function App() {
   return (
     <Router>
       <div>
+        <NavBar />
         {/* Routes Setup */}
         <Routes>
           <Route path="/" element={<Login />} /> // Default route for login
