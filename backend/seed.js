@@ -1,75 +1,109 @@
-/*
-This script was created to seed the information into mongoDB 
-*/
-
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const Project = require("./models/Project"); // Import the Project model
-const Task = require("./models/Task"); // Import the Task model
+const bcrypt = require("bcryptjs");
+const Project = require("./models/Project");
+const User = require("./models/User");
+require("dotenv").config();
 
-dotenv.config(); // Load environment variables
+const MONGO_URI = process.env.MONGO_URI;
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected for Seeding..."))
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err.message);
-    process.exit(1);
-  });
+async function hashPassword(password) {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
+}
 
-// Sample Project Data
-const seedProject = {
-  name: "New Web App Development",
-};
+async function seedDatabase() {
+    try {
+        await mongoose.connect(MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
 
-// Function to Seed Data
-const insertData = async () => {
-  try {
+        console.log("Connected to MongoDB!");
 
-    // Step 2: Create a Project
-    const project = await Project.create(seedProject);
-    console.log("Project Created:", project);
+        // Clear existing data
+        await Project.deleteMany({});
+        await User.deleteMany({});
 
-    if (!project || !project._id) {
-      console.error("Project creation failed, aborting task insertion.");
-      mongoose.connection.close();
-      return;
+        // Create some users
+        const users = await User.insertMany([
+            {
+                firstName: "Alice",
+                lastName: "Johnson",
+                preferredName: "Alice",
+                email: "alice@example.com",
+                password: await hashPassword("password123"),
+                jobRole: "Project Manager",
+                phoneNumber: "91234567",
+                profilePicture: "alice.jpg"
+            },
+            {
+                firstName: "Bob",
+                lastName: "Smith",
+                preferredName: "Bob",
+                email: "bob@example.com",
+                password: await hashPassword("password123"),
+                jobRole: "Frontend Developer",
+                phoneNumber: "92345678",
+                profilePicture: "bob.jpg"
+            },
+            {
+                firstName: "Charlie",
+                lastName: "Davis",
+                preferredName: "Charlie",
+                email: "charlie@example.com",
+                password: await hashPassword("password123"),
+                jobRole: "Backend Developer",
+                phoneNumber: "93456789",
+                profilePicture: "charlie.jpg"
+            }
+        ]);
+
+        console.log("Users seeded:", users);
+
+        // Create a sample project
+        const project = await Project.create({
+            name: "Website Redesign",
+            people: users.map(user => user._id),
+            attributes: [
+                { name: "Name", type: "text" },
+                { name: "Status", type: "dropdown", options: ["Not Started", "In-progress", "Completed"] },
+                { name: "Priority", type: "dropdown", options: ["Low", "Medium", "High"] },
+                { name: "Deadline", type: "date" },
+                { name: "AssignedTo", type: "people" }
+            ],
+            tasks: [
+                {
+                    name: "Create Wireframes",
+                    status: "Not Started",
+                    priority: "High",
+                    deadline: new Date("2025-03-20T00:00:00.000Z").toISOString(),
+                    assignedTo: [users[0]._id]
+                },
+                {
+                    name: "Develop Frontend",
+                    status: "In-progress",
+                    priority: "Medium",
+                    deadline: new Date("2025-04-01T00:00:00.000Z").toISOString(),
+                    assignedTo: [users[1]._id]
+                },
+                {
+                    name: "Setup Backend",
+                    status: "Completed",
+                    priority: "Low",
+                    deadline: new Date("2025-03-15T00:00:00.000Z").toISOString(),
+                    assignedTo: [users[2]._id]
+                }
+            ]
+        });
+
+        console.log("Project seeded:", project);
+
+        mongoose.connection.close();
+        console.log("Database seeding completed!");
+    } catch (error) {
+        console.error("Error seeding database:", error);
+        mongoose.connection.close();
     }
+}
 
-    // Step 3: Create Tasks Associated with the Project
-    const seedTasks = [
-      {
-        name: "Design Homepage",
-        status: "To Do",
-        description: "Create a wireframe for the homepage.",
-        projectId: project._id, // Assign project ID
-      },
-      {
-        name: "API Development",
-        status: "In Progress",
-        description: "Build the backend API endpoints.",
-        projectId: project._id,
-      },
-      {
-        name: "Frontend Integration",
-        status: "Done",
-        description: "Integrate API with React frontend.",
-        projectId: project._id,
-      },
-    ];
-
-    const insertedTasks = await Task.insertMany(seedTasks);
-    console.log("Tasks Inserted:", insertedTasks);
-
-    // Close connection after inserting
-    mongoose.connection.close();
-    console.log("Seeding completed, MongoDB connection closed.");
-  } catch (error) {
-    console.error("Error inserting data:", error.message, error);
-    mongoose.connection.close();
-  }
-};
-
-// Run function
-insertData();
+seedDatabase();

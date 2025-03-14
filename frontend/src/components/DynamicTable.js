@@ -1,230 +1,182 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, TextField, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
 import axios from "axios";
+import DropdownCell from "./DropdownCell";
+import DateSelectorCell from "./DateSelectorCell";
+import dayjs from "dayjs";
 
 const DynamicTable = ({ projectId }) => {
-  const [rows, setRows] = useState([]);
-  const [cols, setCols] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); 
-  const [newColumn, setNewColumn] = useState(""); 
-  const [selectedTask, setSelectedTask] = useState(null); // Task selected for editing
-  const [projectName, setProjectName] = useState("");
+  const [cols, setCols] = useState([]); // updates the cols and starts with an empty array 
+  const [tasks, setTasks] = useState([]); // updates the rows for each of the tasks
+  const [peopleMap, setPeopleMap] = useState({}); //hashmap for ID -> Name
+  const [projectName, setProjectName] = useState();
 
-  // Fetch tasks from the database
-  useEffect(() => {
-    axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`)
-      .then((response) => {
-        const formattedRows = response.data.map(({ _id, __v, ...rest }) => ({
-          ...rest,
-          id: _id, // Keep ID for selection, but hide it in the UI
-        }));
-        setRows(formattedRows);
-      })
-      .catch((error) => console.error("Error fetching tasks:", error));
-  }, [projectId]);
-
-  // Fetch columns from the database
-  useEffect(() => {
-    axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
-      .then((response) => {
-        const columnNames = response.data.filter(col => col !== "_id" && col !== "__v" && col !== "projectId");
-
-        const formattedColumns = columnNames.map((col) => ({
-          field: col,
-          headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-          width: 150,
-          ...(col === "status" && { 
-            renderCell: (params) => (
-              <StatusDropdown row={params.row} projectId={projectId} updateTask={updateTask} />
-            )
-          }),
-        }));
-
-        // Add Action Button Column
-        formattedColumns.push({
-          field: "actions",
-          headerName: "Actions",
-          width: 120,
-          renderCell: (params) => (
-            <Button size="small" variant="contained" onClick={() => handleEditClick(params.row)}>
-              Edit
-            </Button>
-          ),
-        });
-
-        setCols(formattedColumns);
-      })
-      .catch((error) => console.error("Error fetching columns:", error));
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) {
-      console.error("Project ID is undefined");
-      return;
-    }
-  
-    axios.get(`http://localhost:5001/api/projects/${projectId}/name`) // Corrected API route
-      .then((response) => {
-        console.log("Project name response:", response.data); // Debugging log
-        if (response.data && response.data.name) {
-          setProjectName(response.data.name);
-        } else {
-          console.error("Invalid response format:", response.data);
-        }
-      })
-      .catch((error) => console.error("Error fetching project name:", error));
-  }, [projectId]);
-  
-  
-  // Function to update task in backend
-  const updateTask = async (updatedTask) => {
-    setRows((prevTasks) =>
-      prevTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-    );
-
+  const handleUpdate = async (taskId, field, newValue) => {
     try {
-      await axios.put(`http://localhost:5001/api/tasks/tasks/${updatedTask.id}`, updatedTask);
-    } catch (error) {
-      console.error("Error updating task:", error.response?.status, error.response?.data);
-    }
-  };
-
-  // Open edit modal
-  const handleEditClick = (task) => {
-    setSelectedTask(task);
-  };
-
-  // Handle input change in edit modal
-  const handleFieldChange = (field, value) => {
-    setSelectedTask((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Save edited task
-  const handleSave = async () => {
-    if (selectedTask) {
-      await updateTask(selectedTask);
-      setSelectedTask(null); // Close modal after saving
-    }
-  };
-
-  // Add a new column
-  const handleAddColumn = async () => {
-    if (!newColumn.trim()) return; 
+      // 1. Construct the API request payload
+      const payload = { field, newValue };
   
-    try {
-      await axios.post(`http://localhost:5001/api/tasks/${projectId}/add-attribute`, {
-        attributeName: newColumn,
-        defaultValue: "" 
-      });
-
-      // Re-fetch updated data
-      const [updatedTasks, updatedColumns] = await Promise.all([
-        axios.get(`http://localhost:5001/api/tasks/${projectId}/tasks`),
-        axios.get(`http://localhost:5001/api/tasks/${projectId}/cols`)
-      ]);
-
-      setRows(updatedTasks.data.map(({ _id, __v, ...rest }) => ({ ...rest, id: _id })));
-      setCols(updatedColumns.data.filter(col => col !== "_id" && col !== "__v").map(col => ({
-        field: col,
-        headerName: col.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase()),
-        width: 150,
-        ...(col === "status" && { 
-          renderCell: (params) => (
-            <StatusDropdown row={params.row} projectId={projectId} updateTask={updateTask} />
-          )
-        }),
-      })));
-
-      setNewColumn(""); 
+      // 2. Send a PATCH request with taskId included in the URL
+      const response = await axios.patch(`/api/projects/${projectId}/update-task/${taskId}`, payload);
+  
+      if (response.status !== 200) {  // Fixing incorrect status check
+        throw new Error(`Failed to update ${field}: ${response.statusText}`);
+      }
+  
+      // 3. Update only the relevant task in `tasks`
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId ? { ...task, [field]: newValue } : task
+        )
+      );
+  
+      console.log(`Updated ${field} for task ${taskId} to:`, newValue);
     } catch (error) {
-      console.error("Error adding column:", error);
+      console.error(`Error updating ${field}:`, error.response ? error.response.data : error.message);
     }
   };
   
-  // Apply search filter by name
-  const filteredRows = rows.filter((row) => row.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-return (
-  <Box sx={{ width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
-    {/* Project Name Header */}
-    {projectName && (
-      <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
-        {projectName}
-      </Typography>
-    )}
+  useEffect(() => {
+    const getColsAndTasks = async () => {
+      //updates the columnns and tasks for the table
+      try {
+        console.log("Fetching project data for projectId:", projectId);
 
-    {/* Centered Content */}
-    <Box sx={{ width: "60%", maxWidth: 800, height: "auto", minHeight: 300 }}>
-      {/* Search Bar */}
-      <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
-        <TextField label="Search by Name" variant="outlined" fullWidth value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-      </Box>
+        const response = await axios.get(`api/projects/${projectId}`); 
+        console.log("API Response:", response.data);
 
-      {/* Add Column Section */}
-      <Box sx={{ display: "flex", marginBottom: "20px", gap: 2 }}>
-        <TextField label="New Column Name" variant="outlined" fullWidth value={newColumn} onChange={(e) => setNewColumn(e.target.value)} />
-        <Button variant="contained" onClick={handleAddColumn}>Add Column</Button>
-      </Box>
+        const project = response.data; 
 
-      {/* Dynamic Table */}
-      <Box sx={{ width: "100%", height: 400 }}> {/* Fixed height to avoid ResizeObserver errors */}
-        <DataGrid 
-          rows={filteredRows} 
-          columns={cols} 
-          autoHeight={true} // Prevent dynamic height issues
-          checkboxSelection 
-          disableColumnMenu 
-        />
-      </Box>
+        setProjectName(project.name);
 
-      {/* Edit Task Modal */}
-      {selectedTask && (
-        <Dialog open={true} onClose={() => setSelectedTask(null)} fullWidth>
-          <DialogTitle>Edit Task</DialogTitle>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, paddingTop: 2 }}>
-            {Object.keys(selectedTask).map((field) => 
-              field !== "id" && field !== "_id" && field !== "__v" && (
-                field === "status" ? (
-                  <Select key={field} value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} fullWidth>
-                    <MenuItem value="To Do">To Do</MenuItem>
-                    <MenuItem value="In Progress">In Progress</MenuItem>
-                    <MenuItem value="Done">Done</MenuItem>
-                  </Select>
-                ) : (
-                  <TextField key={field} label={field} variant="outlined" fullWidth value={selectedTask[field]} onChange={(e) => handleFieldChange(field, e.target.value)} />
+        // Fetch people list separately
+        const peopleResponse = await axios.get(`api/projects/${projectId}/people`); 
+        const peopleMap = peopleResponse.data; 
+
+        setPeopleMap(peopleMap); // Store in state
+        console.log("People Hash Map:", peopleMap);
+
+        const tableColumns = project.attributes.map((attr, index) => {
+          const fieldName = attr.name.replace(/\s+/g, "").charAt(0).toLowerCase() + attr.name.slice(1); // Ensure lowercase first letter
+        
+          return {
+            field: fieldName,
+            headerName: attr.name,
+            width: 200,
+            renderCell: (params) => {
+              if (attr.type === "dropdown") {
+                return (
+                  <DropdownCell
+                    value={params.value}
+                    options={attr.options}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
+                );
+              }
+
+              if (attr.type === "date") {
+                return (  
+                  <DateSelectorCell
+                    value={params.value}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
                 )
-              )
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setSelectedTask(null)}>Cancel</Button>
-            <Button variant="contained" onClick={handleSave}>Save</Button>
-          </DialogActions>
-        </Dialog>
-      )}
-    </Box>
-  </Box>
-);
+              }
 
+              if (attr.type === "people") {
+                return (
+                  <DropdownCell
+                    value={params.value}
+                    options={project.people.map(personId => (
+                      peopleMap[personId]))}
+                    handleUpdate={(newValue) => handleUpdate(params.row.id, attr.name.toLowerCase(), newValue)}
+                  />
+                );
+              }
+              
+              if (attr.type === "text") {
+                return (
+                  <input
+                    type="text"
+                    value={params.value}
+                    onChange={(e) =>
+                      handleUpdate(params.row.id, attr.name.toLowerCase(), e.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      background: "transparent",
+                      outline: "none",
+                      fontSize: "inherit",
+                    }}
+                  />
+                );
+              }
+
+              return <span>{params.value}</span>;
+            },
+            key: `column-${index}` // Ensure unique column keys
+          };
+        });
+        
+        console.log("Generated Columns:", tableColumns);
+
+        const formattedTasks = project.tasks.map((task) => ({
+          id: task._id,
+          name: task.name,
+          status: task.status,
+          priority: task.priority,
+          deadline: task.deadline ? dayjs(task.deadline) : null,
+          assignedTo: task.assignedTo.map(personId => peopleMap[personId] || "Unknown").join(", "),
+        }));
+
+        console.log("Formatted Tasks:", formattedTasks);
+
+        setCols(tableColumns);
+        console.log("Updated Columns State:", tableColumns);
+
+        setTasks(formattedTasks);
+        console.log("Updated Tasks State:", formattedTasks);
+      } catch (error) {
+        console.error("Error fetching columns and tasks: ", error);
+      }
+    };
+
+    if (projectId) {
+      getColsAndTasks();
+    }
+  }, [projectId]);
+
+  return (
+    <div 
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", // Stack header and grid vertically
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh",  // Make it take the full height of the screen
+        width: "100vw"    // Make it take the full width of the screen
+      }}
+    >
+      <div style={{ marginBottom: "20px" }}>  {/* Space between header and grid */}
+        <h1>{projectName}</h1>  {/* Display the project name */}
+      </div>
   
-};
-
-// Dropdown component for status
-const StatusDropdown = ({ row, projectId, updateTask }) => {
-  const [status, setStatus] = useState(row.status);
-  const handleChange = async (event) => {
-    const newStatus = event.target.value;
-    setStatus(newStatus);
-    const updatedTask = { ...row, status: newStatus };
-    await updateTask(updatedTask);
-  };
-
-  return <Select value={status} onChange={handleChange} fullWidth size="small" variant="outlined">
-    <MenuItem value="To Do">To Do</MenuItem>
-    <MenuItem value="In Progress">In Progress</MenuItem>
-    <MenuItem value="Done">Done</MenuItem>
-  </Select>;
+      <div style={{ width: "80%", maxWidth: "1200px" }}> {/* Adjust width as needed */}
+        <DataGrid
+          rows={tasks}
+          columns={cols}
+          getRowId={(task) => task.id}
+          pageSize={5}
+          disableSelectionOnClick
+          autoHeight  // Automatically adjust height to fit content
+        />
+      </div>
+    </div>
+  );
+  
+  
 };
 
 export default DynamicTable;

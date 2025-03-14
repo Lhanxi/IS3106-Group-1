@@ -10,7 +10,6 @@ const connectDB = require("./config/db");
 
 // Route Handlers
 const userRoutes = require("./routes/userRoutes");
-const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoute");
 const forumRoutes = require("./routes/forumRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
@@ -21,8 +20,9 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
+app.use("/api", userRoutes);
+//app.use("/api/tasks", taskRoutes);
+
 app.use("/api/projects", projectRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api", forumRoutes); // KL: check if its supp to be like that
@@ -36,6 +36,8 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+app.use("/api/users", userRoutes);
+//app.use("/api/tasks", taskRoutes);
 
 // Handle Undefined Routes
 app.use((req, res) => {

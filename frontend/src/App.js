@@ -13,6 +13,9 @@ import CustomCalendar from "./pages/Calendar";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
+import DynamicTable from "./components/DynamicTable";
+import AddColumnButton from "./components/AddColumnButton";
+import CreateProjectPage from "./pages/CreateProject";
 // import RequestForm from "./pages/RequestForm";
 // import RequestFormButton from "./components/buttons/RequestFormButton";
 import Timeline from "./pages/Timeline";
@@ -25,10 +28,12 @@ function App() {
         {/* <RequestFormButton projectId={"67c2ed808213682387a8ecb7"} /> */}
         <NavBar />
         {/* Routes Setup */}
-        <Routes>
+        <Routes> 
           <Route path="/" element={<Login />} /> // Default route for login
           <Route path="/signup" element={<Signup />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/test-column" element={<AddColumnButton />} />
+          <Route path="/table" element={<DynamicTable projectId="67d19a8278b9465bf204174f" />} />
           <Route path="/calendar" element={<CustomCalendar />} />
           {/* <Route path="/form/:projectId" element={<RequestForm />} /> */}
           <Route path="/timeline" element={<Timeline />} />
@@ -37,6 +42,7 @@ function App() {
             path="*"
             element={<Navigate to="/" replace />} // Redirects any unknown routes to Login
           />
+          <Route path="create-project" element={<CreateProjectPage />}/>
         </Routes>
       </div>
     </Router>
